@@ -1,12 +1,159 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Memory_Game.Model;
+using System.Windows.Input;
+using Memory_Game.Common;
 
 namespace Memory_Game.ViewModel
 {
-    internal class LoginViewModel
+    public class LoginViewModel : ViewModelBase
     {
+        private ObservableCollection<User> _users;
+        public ObservableCollection<User> Users
+        {
+            get => _users;
+            set
+            {
+                if (_users != value)
+                {
+                    _users = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private User _selectedUser;
+        public User SelectedUser
+        {
+            get => _selectedUser;
+            set
+            {
+                if (_selectedUser != value)
+                {
+                    _selectedUser = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CanDeleteUser));
+                    OnPropertyChanged(nameof(CanLogin));
+                }
+            }
+        }
+
+        private string _newUser;
+        public string NewUser
+        {
+            get => _newUser;
+            set
+            {
+                if (_newUser != value)
+                {
+                    _newUser = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CanCreateUser));
+                }
+            }
+        }
+
+        private string _newImagePath;
+        public string NewImagePath
+        {
+            get => _newImagePath;
+            set
+            {
+                if (_newImagePath != value)
+                {
+                    _newImagePath = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CanCreateUser));
+                }
+            }
+        }
+
+        public bool CanDeleteUser => SelectedUser != null;
+        public bool CanLogin => SelectedUser != null;
+        public bool CanCreateUser => !string.IsNullOrWhiteSpace(NewUser) && !string.IsNullOrWhiteSpace(NewImagePath);
+
+        public ICommand LoginCommand { get; }
+        public ICommand CreateUserCommand { get; }
+        public ICommand DeleteUserCommand { get; }
+        public ICommand SelectUserCommand { get; }
+        public ICommand BrowseImageCommand { get; }
+
+        public LoginViewModel()
+        {
+            LoginCommand = new RelayCommand(
+                execute: (object param) => ExecuteLogin(),
+                canExecute: (object param) => CanLogin
+            );
+
+            CreateUserCommand = new RelayCommand(
+                execute: (object param) => ExecuteCreateUser(),
+                canExecute: (object param) => CanCreateUser
+            );
+
+            DeleteUserCommand = new RelayCommand(
+                execute: (object param) => ExecuteDeleteUser(),
+                canExecute: (object param) => CanDeleteUser
+            );
+
+            SelectUserCommand = new RelayCommand<User>(
+                execute: (User user) => ExecuteSelectUser(user),
+                canExecute: (User user) => user != null
+            );
+
+            BrowseImageCommand = new RelayCommand(
+                execute: (object param) => ExecuteBrowseImage(),
+                canExecute: (object param) => true
+            );
+
+            Users = new ObservableCollection<User>();
+            LoadUsers();
+        }
+
+        private void ExecuteLogin()
+        {
+            // Navigate to game view
+            // This will be implemented later with navigation service
+        }
+
+        private void ExecuteCreateUser()
+        {
+            var newUser = new User(NewUser, NewImagePath, false);
+            Users.Add(newUser);
+            // Save users to file
+            // Clear input fields
+            NewUser = string.Empty;
+            NewImagePath = string.Empty;
+        }
+
+        private void ExecuteDeleteUser()
+        {
+            if (SelectedUser != null)
+            {
+                Users.Remove(SelectedUser);
+                SelectedUser = null;
+                // Save users to file
+            }
+        }
+
+        private void ExecuteSelectUser(User user)
+        {
+            SelectedUser = user;
+        }
+
+        private void ExecuteBrowseImage()
+        {
+            // Open file dialog to select image
+            // This will be implemented later with file dialog service
+        }
+
+        private void LoadUsers()
+        {
+            // Load users from file
+            // This will be implemented later with user service
+        }
     }
 }
