@@ -4,9 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Memory_Game"
+        xmlns:views="clr-namespace:Memory_Game.View"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Memory Game"
+        Height="700"
+        Width="1000"
+        WindowStartupLocation="CenterScreen">
     <Grid>
-
+        <Frame x:Name="MainFrame"
+               NavigationUIVisibility="Hidden"
+               Background="{StaticResource BackgroundBrush}"/>
     </Grid>
 </Window>

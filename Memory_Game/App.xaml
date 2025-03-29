@@ -3,7 +3,79 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Memory_Game"
              StartupUri="MainWindow.xaml">
-    <Application.Resources>
-         
-    </Application.Resources>
+        <Application.Resources>
+                <!-- Colors -->
+                <Color x:Key="PrimaryColor">#FF007ACC</Color>
+                <Color x:Key="SecondaryColor">#FF5C2D91</Color>
+                <Color x:Key="BackgroundColor">#FF1E1E1E</Color>
+                <Color x:Key="TextColor">#FFFFFFFF</Color>
+
+                <!-- Brushes -->
+                <SolidColorBrush x:Key="PrimaryBrush"
+                                 Color="{StaticResource PrimaryColor}"/>
+                <SolidColorBrush x:Key="SecondaryBrush"
+                                 Color="{StaticResource SecondaryColor}"/>
+                <SolidColorBrush x:Key="BackgroundBrush"
+                                 Color="{StaticResource BackgroundColor}"/>
+                <SolidColorBrush x:Key="TextBrush"
+                                 Color="{StaticResource TextColor}"/>
+
+                <!-- Button Style -->
+                <Style TargetType="Button">
+                        <Setter Property="Background"
+                                Value="{StaticResource PrimaryBrush}"/>
+                        <Setter Property="Foreground"
+                                Value="{StaticResource TextBrush}"/>
+                        <Setter Property="Padding"
+                                Value="15,8"/>
+                        <Setter Property="Margin"
+                                Value="5"/>
+                        <Setter Property="BorderThickness"
+                                Value="0"/>
+                        <Setter Property="Template">
+                                <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="5">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"/>
+                                                </Border>
+                                        </ControlTemplate>
+                                </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                        <Setter Property="Background"
+                                                Value="{StaticResource SecondaryBrush}"/>
+                                </Trigger>
+                        </Style.Triggers>
+                </Style>
+
+                <!-- TextBox Style -->
+                <Style TargetType="TextBox">
+                        <Setter Property="Background"
+                                Value="#FF2D2D2D"/>
+                        <Setter Property="Foreground"
+                                Value="{StaticResource TextBrush}"/>
+                        <Setter Property="Padding"
+                                Value="5"/>
+                        <Setter Property="Margin"
+                                Value="5"/>
+                        <Setter Property="BorderThickness"
+                                Value="1"/>
+                        <Setter Property="BorderBrush"
+                                Value="{StaticResource PrimaryBrush}"/>
+                </Style>
+
+                <!-- Window Style -->
+                <Style TargetType="Window">
+                        <Setter Property="Background"
+                                Value="{StaticResource BackgroundBrush}"/>
+                        <Setter Property="Foreground"
+                                Value="{StaticResource TextBrush}"/>
+                </Style>
+        </Application.Resources>
 </Application>
