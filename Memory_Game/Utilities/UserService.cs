@@ -22,7 +22,7 @@ namespace Memory_Game.Utilities
             string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
             _usersFilePath = Path.Combine(appDirectory, "users.txt");
-            _imageDirectory = Path.Combine(appDirectory, "UserImages.json");
+            _imageDirectory = Path.Combine(appDirectory, "UserImages");
             Directory.CreateDirectory(_imageDirectory);
         }
 

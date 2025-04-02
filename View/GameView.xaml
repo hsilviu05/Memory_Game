@@ -1,0 +1,187 @@
+&lt;UserControl x:Class="Memory_Game.View.GameView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Memory_Game.View"
+             xmlns:vm="clr-namespace:Memory_Game.ViewModel"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800"
+             Background="#F0F0F0">
+    
+    <UserControl.DataContext>
+        <vm:GameViewModel/>
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="MenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+        </Style>
+
+        <Style x:Key="GameInfoText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+        </Style>
+
+        <Style x:Key="GameCard" TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" BlurRadius="5" Opacity="0.3"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#3498DB"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Menu -->
+        <Menu Grid.Row="0" Background="White" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+            <MenuItem Header="File" Style="{StaticResource MenuItemStyle}">
+                <MenuItem Header="Category" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="Category 1" Command="{Binding SelectCategoryCommand}" CommandParameter="1"/>
+                    <MenuItem Header="Category 2" Command="{Binding SelectCategoryCommand}" CommandParameter="2"/>
+                    <MenuItem Header="Category 3" Command="{Binding SelectCategoryCommand}" CommandParameter="3"/>
+                </MenuItem>
+                <MenuItem Header="New Game" Command="{Binding NewGameCommand}"/>
+                <MenuItem Header="Open Game" Command="{Binding OpenGameCommand}"/>
+                <MenuItem Header="Save Game" Command="{Binding SaveGameCommand}"/>
+                <MenuItem Header="Statistics" Command="{Binding ShowStatisticsCommand}"/>
+                <Separator/>
+                <MenuItem Header="Exit" Command="{Binding ExitCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Options" Style="{StaticResource MenuItemStyle}">
+                <MenuItem Header="Standard (4x4)" Command="{Binding SetBoardSizeCommand}" CommandParameter="standard"/>
+                <MenuItem Header="Custom">
+                    <StackPanel Orientation="Vertical" Width="200" Margin="10">
+                        <TextBlock Text="Rows (2-6):" Margin="0,5"/>
+                        <TextBox Text="{Binding CustomRows, UpdateSourceTrigger=PropertyChanged}" 
+                                 Padding="5" Margin="0,5"/>
+                        <TextBlock Text="Columns (2-6):" Margin="0,5"/>
+                        <TextBox Text="{Binding CustomColumns, UpdateSourceTrigger=PropertyChanged}" 
+                                 Padding="5" Margin="0,5"/>
+                        <Button Content="Apply" 
+                                Command="{Binding SetBoardSizeCommand}" 
+                                CommandParameter="custom" 
+                                Background="#3498DB"
+                                Foreground="White"
+                                Padding="10,5"
+                                Margin="0,10,0,0"/>
+                    </StackPanel>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="Help" Style="{StaticResource MenuItemStyle}">
+                <MenuItem Header="About" Command="{Binding ShowAboutCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Game Info -->
+        <Border Grid.Row="1" 
+                Background="White" 
+                BorderBrush="#EEEEEE" 
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="15">
+                <TextBlock Text="Time Remaining: " Style="{StaticResource GameInfoText}"/>
+                <TextBlock Text="{Binding TimeRemaining}" 
+                           Style="{StaticResource GameInfoText}" 
+                           FontWeight="Bold" 
+                           Foreground="#E74C3C"/>
+                <TextBlock Text=" seconds" Style="{StaticResource GameInfoText}"/>
+                <TextBlock Text="Category: " 
+                           Style="{StaticResource GameInfoText}" 
+                           Margin="20,0,0,0"/>
+                <TextBlock Text="{Binding CurrentCategory}" 
+                           Style="{StaticResource GameInfoText}" 
+                           FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Game Board -->
+        <Border Grid.Row="2" 
+                Background="White" 
+                Margin="20" 
+                CornerRadius="8"
+                BorderBrush="#DDDDDD"
+                BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="2" BlurRadius="5" Opacity="0.2"/>
+            </Border.Effect>
+            
+            <ItemsControl ItemsSource="{Binding Cards}"
+                          Margin="15">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="{Binding BoardRows}" 
+                                    Columns="{Binding BoardColumns}"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Style="{StaticResource GameCard}"
+                                Command="{Binding DataContext.FlipCardCommand, 
+                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                CommandParameter="{Binding}">
+                            <Grid>
+                                <Image Source="{Binding BackImage}" 
+                                       Stretch="Uniform"
+                                       Margin="10"
+                                       RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFlipped}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                                <Image Source="{Binding FrontImage}" 
+                                       Stretch="Uniform"
+                                       Margin="10"
+                                       RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFlipped}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+    </Grid>
+</UserControl>

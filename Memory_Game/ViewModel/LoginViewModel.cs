@@ -57,15 +57,15 @@ namespace Memory_Game.ViewModel
             }
         }
 
-        private string _newImagePath;
-        public string NewImagePath
+        private string _newUserImage;
+        public string NewUserImage
         {
-            get => _newImagePath;
+            get => _newUserImage;
             set
             {
-                if (_newImagePath != value)
+                if (_newUserImage != value)
                 {
-                    _newImagePath = value;
+                    _newUserImage = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(CanCreateUser));
                 }
@@ -74,13 +74,13 @@ namespace Memory_Game.ViewModel
 
         public bool CanDeleteUser => SelectedUser != null;
         public bool CanLogin => SelectedUser != null;
-        public bool CanCreateUser => !string.IsNullOrWhiteSpace(NewUser) && !string.IsNullOrWhiteSpace(NewImagePath);
+        public bool CanCreateUser => !string.IsNullOrWhiteSpace(NewUser) && !string.IsNullOrWhiteSpace(NewUserImage);
 
         public ICommand LoginCommand { get; }
         public ICommand CreateUserCommand { get; }
         public ICommand DeleteUserCommand { get; }
         public ICommand SelectUserCommand { get; }
-        public ICommand BrowseImageCommand { get; }
+        public ICommand ChooseImageCommand { get; }
 
         public LoginViewModel()
         {
@@ -104,7 +104,7 @@ namespace Memory_Game.ViewModel
                 canExecute: (User user) => user != null
             );
 
-            BrowseImageCommand = new RelayCommand(
+            ChooseImageCommand = new RelayCommand(
                 execute: (object param) => ExecuteBrowseImage(),
                 canExecute: (object param) => true
             );
@@ -121,12 +121,12 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteCreateUser()
         {
-            var newUser = new User(NewUser, NewImagePath, false);
+            var newUser = new User(NewUser, NewUserImage, false);
             Users.Add(newUser);
             // Save users to file
             // Clear input fields
             NewUser = string.Empty;
-            NewImagePath = string.Empty;
+            NewUserImage = string.Empty;
         }
 
         private void ExecuteDeleteUser()
@@ -146,8 +146,15 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteBrowseImage()
         {
-            // Open file dialog to select image
-            // This will be implemented later with file dialog service
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Image files (*.jpg;*.jpeg;*.png;*.gif)|*.jpg;*.jpeg;*.png;*.gif|All files (*.*)|*.*",
+                Title = "Select Profile Image"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                NewUserImage = dialog.FileName;
+            }
         }
 
         private void LoadUsers()

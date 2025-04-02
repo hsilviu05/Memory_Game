@@ -17,7 +17,7 @@ namespace Memory_Game.View
     /// <summary>
     /// Interaction logic for GameView.xaml
     /// </summary>
-    public partial class GameView : Window
+    public partial class GameView : UserControl
     {
         public GameView()
         {

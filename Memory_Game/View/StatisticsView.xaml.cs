@@ -17,7 +17,7 @@ namespace Memory_Game.View
     /// <summary>
     /// Interaction logic for StatisticsView.xaml
     /// </summary>
-    public partial class StatisticsView : Window
+    public partial class StatisticsView : UserControl
     {
         public StatisticsView()
         {

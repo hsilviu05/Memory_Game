@@ -1,12 +1,198 @@
-﻿<Window x:Class="Memory_Game.View.LoginView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Memory_Game.View"
-        mc:Ignorable="d"
-        Title="LoginView" Height="450" Width="800">
-    <Grid>
-        
+﻿<UserControl x:Class="Memory_Game.View.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Memory_Game.View"
+             xmlns:vm="clr-namespace:Memory_Game.ViewModel"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="#F0F0F0">
+
+    <UserControl.DataContext>
+        <vm:LoginViewModel/>
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="CardBorder" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="2" BlurRadius="5" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,20"/>
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2980B9"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#BDC3C7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Text="Memory Game Login" 
+                   Style="{StaticResource HeaderText}"/>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Side - User List -->
+            <Border Style="{StaticResource CardBorder}" 
+                    Margin="10">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Select User" 
+                             FontSize="20" 
+                             FontWeight="SemiBold"
+                             Foreground="#2C3E50"/>
+
+                    <ListBox Grid.Row="1" 
+                            Margin="0,15"
+                            ItemsSource="{Binding Users}"
+                            SelectedItem="{Binding SelectedUser}"
+                            Background="Transparent"
+                            BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="10" 
+                                        Background="White" 
+                                        CornerRadius="4" 
+                                        Margin="0,5">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="40" 
+                                                Height="40" 
+                                                CornerRadius="20"
+                                                ClipToBounds="True">
+                                            <Image Source="{Binding ImagePath}" 
+                                                   Stretch="UniformToFill"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Username}" 
+                                                 VerticalAlignment="Center"
+                                                 Margin="15,0"
+                                                 FontSize="16"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="2" 
+                              Orientation="Horizontal" 
+                              HorizontalAlignment="Center" 
+                              Margin="0,10,0,0">
+                        <Button Content="Play" 
+                                Width="100" 
+                                Margin="5"
+                                Style="{StaticResource ActionButton}"
+                                Command="{Binding PlayCommand}"/>
+                        <Button Content="Delete User" 
+                                Width="100" 
+                                Margin="5"
+                                Style="{StaticResource ActionButton}"
+                                Command="{Binding DeleteUserCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Right Side - New User Creation -->
+            <Border Style="{StaticResource CardBorder}" 
+                    Grid.Column="1"
+                    Margin="10">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Create New User" 
+                             FontSize="20" 
+                             FontWeight="SemiBold"
+                             Foreground="#2C3E50"/>
+
+                    <StackPanel Grid.Row="1" Margin="0,15">
+                        <TextBlock Text="Username"
+                                 FontWeight="SemiBold"
+                                 Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding NewUser, UpdateSourceTrigger=PropertyChanged}" 
+                                Padding="8"
+                                Margin="0,0,0,15"/>
+
+                        <TextBlock Text="Profile Image"
+                                 FontWeight="SemiBold"
+                                 Margin="0,0,0,5"/>
+
+                        <Border Width="150" 
+                                Height="150"
+                                Background="#EEEEEE"
+                                BorderBrush="#DDDDDD"
+                                BorderThickness="2"
+                                CornerRadius="8"
+                                Margin="0,0,0,10">
+                            <Image Source="{Binding NewUserImage}" 
+                                   Stretch="UniformToFill"/>
+                        </Border>
+
+                        <Button Content="Choose Image" 
+                                Style="{StaticResource ActionButton}"
+                                Width="150"
+                                Command="{Binding ChooseImageCommand}"/>
+                    </StackPanel>
+
+                    <Button Grid.Row="2" 
+                            Content="Create User" 
+                            Style="{StaticResource ActionButton}"
+                            Width="150"
+                            Command="{Binding CreateUserCommand}"/>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
-</Window>
+</UserControl>

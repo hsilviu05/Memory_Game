@@ -81,7 +81,9 @@ namespace Memory_Game.Utilities
             try
             {
                 var statistics = LoadStatistics();
+                
                 return statistics.FirstOrDefault(s => s.Username == username);
+                
             }
             catch (Exception ex)
             {
