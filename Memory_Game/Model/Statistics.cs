@@ -76,12 +76,37 @@ namespace Memory_Game.Model
             }
         }
 
-        public Statistics() { }
-        public Statistics(string username, int gamesPlayed, int gamesWon)
+        public TimeSpan BestTime { get; set; }
+        public int TotalMoves { get; set; }
+
+        public double AverageMovesPerGame => GamesPlayed > 0 ? (double)TotalMoves / GamesPlayed : 0;
+
+        public Statistics()
+        {
+            BestTime = TimeSpan.MaxValue;
+        }
+
+        public Statistics(string username)
         {
             Username = username;
-            GamesPlayed = gamesPlayed;
-            GamesWon = gamesWon;
+            GamesPlayed = 0;
+            GamesWon = 0;
+            BestTime = TimeSpan.MaxValue;
+            TotalMoves = 0;
+        }
+
+        public void UpdateStats(bool isWon, TimeSpan gameTime, int moves)
+        {
+            GamesPlayed++;
+            if (isWon)
+            {
+                GamesWon++;
+                if (gameTime < BestTime)
+                {
+                    BestTime = gameTime;
+                }
+            }
+            TotalMoves += moves;
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

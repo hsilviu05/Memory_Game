@@ -88,14 +88,17 @@ namespace Memory_Game.Model
             }
         }
 
+        public int PairId { get; set; }
+
         public Card() { }
-        public Card(string imagePath, bool isFlipped, bool isMatched, int position, int cardId)
+
+        public Card(string imagePath, bool isFlipped, bool isMatched, int cardId, int pairId)
         {
             ImagePath = imagePath;
             IsFlipped = isFlipped;
             IsMatched = isMatched;
-            Position = position;
             CardId = cardId;
+            PairId = pairId;
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

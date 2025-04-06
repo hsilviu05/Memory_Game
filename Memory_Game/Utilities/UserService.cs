@@ -75,27 +75,6 @@ namespace Memory_Game.Utilities
                 return false;
             }
         }
-        private bool DleteUser(string username)
-        {
-            try
-            {
-                var users = LoadUsers();
-                var user = users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
-                if (user != null)
-                {
-                    DeleteUserImage(user.ImagePath);
-
-                    users.Remove(user);
-                    SaveUsers(users);
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-        }
 
         private string CopyUserImage(string sourcePath, string username)
         {
@@ -119,6 +98,27 @@ namespace Memory_Game.Utilities
             catch (Exception ex)
             {
                 // Log exception
+            }
+        }
+
+        public bool DeleteUser(string username)
+        {
+            try
+            {
+                var users = LoadUsers();
+                var user = users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+                if (user != null)
+                {
+                    DeleteUserImage(user.ImagePath);
+                    users.Remove(user);
+                    SaveUsers(users);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
             }
         }
     }

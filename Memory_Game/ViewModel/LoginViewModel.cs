@@ -7,11 +7,18 @@ using System.Threading.Tasks;
 using Memory_Game.Model;
 using System.Windows.Input;
 using Memory_Game.Common;
+using System.Windows;
+using Microsoft.Win32;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using Memory_Game.View;
+using Memory_Game.Utilities;
 
 namespace Memory_Game.ViewModel
 {
-    public class LoginViewModel : ViewModelBase
+    public class LoginViewModel : ViewModelBase, INotifyPropertyChanged
     {
+        private readonly UserService _userService;
         private ObservableCollection<User> _users;
         public ObservableCollection<User> Users
         {
@@ -80,10 +87,12 @@ namespace Memory_Game.ViewModel
         public ICommand CreateUserCommand { get; }
         public ICommand DeleteUserCommand { get; }
         public ICommand SelectUserCommand { get; }
-        public ICommand ChooseImageCommand { get; }
+        public ICommand BrowseImageCommand { get; }
 
         public LoginViewModel()
         {
+            _userService = new UserService();
+
             LoginCommand = new RelayCommand(
                 execute: (object param) => ExecuteLogin(),
                 canExecute: (object param) => CanLogin
@@ -104,7 +113,7 @@ namespace Memory_Game.ViewModel
                 canExecute: (User user) => user != null
             );
 
-            ChooseImageCommand = new RelayCommand(
+            BrowseImageCommand = new RelayCommand(
                 execute: (object param) => ExecuteBrowseImage(),
                 canExecute: (object param) => true
             );
@@ -115,27 +124,99 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteLogin()
         {
-            // Navigate to game view
-            // This will be implemented later with navigation service
+            try
+            {
+                if (SelectedUser == null)
+                {
+                    MessageBox.Show("Please select a user to login.", "Login Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var gameViewModel = new GameViewModel
+                {
+                    CurrentPlayer = SelectedUser
+                };
+
+                var gameView = new GameView
+                {
+                    DataContext = gameViewModel
+                };
+
+                var mainWindow = Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    mainWindow.Content = gameView;
+                }
+                else
+                {
+                    var window = new Window
+                    {
+                        Title = "Memory Game",
+                        Content = gameView,
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                        Width = 1000,
+                        Height = 700
+                    };
+                    window.Show();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during login: {ex.Message}", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void ExecuteCreateUser()
         {
-            var newUser = new User(NewUser, NewUserImage, false);
-            Users.Add(newUser);
-            // Save users to file
-            // Clear input fields
-            NewUser = string.Empty;
-            NewUserImage = string.Empty;
+            try
+            {
+                var newUser = new User(NewUser, NewUserImage, false);
+                if (_userService.AddUser(newUser))
+                {
+                    Users.Add(newUser);
+                    NewUser = string.Empty;
+                    NewUserImage = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show("A user with this username already exists.", "Create User Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error creating user: {ex.Message}", "Create User Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void ExecuteDeleteUser()
         {
-            if (SelectedUser != null)
+            try
             {
-                Users.Remove(SelectedUser);
-                SelectedUser = null;
-                // Save users to file
+                if (SelectedUser != null)
+                {
+                    var result = MessageBox.Show(
+                        $"Are you sure you want to delete user {SelectedUser.Username}?",
+                        "Confirm Delete",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        if (_userService.DeleteUser(SelectedUser.Username))
+                        {
+                            Users.Remove(SelectedUser);
+                            SelectedUser = null;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Error deleting user.", "Delete User Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error deleting user: {ex.Message}", "Delete User Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -148,9 +229,10 @@ namespace Memory_Game.ViewModel
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "Image files (*.jpg;*.jpeg;*.png;*.gif)|*.jpg;*.jpeg;*.png;*.gif|All files (*.*)|*.*",
-                Title = "Select Profile Image"
+                Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg|All files (*.*)|*.*",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)
             };
+
             if (dialog.ShowDialog() == true)
             {
                 NewUserImage = dialog.FileName;
@@ -159,8 +241,15 @@ namespace Memory_Game.ViewModel
 
         private void LoadUsers()
         {
-            // Load users from file
-            // This will be implemented later with user service
+            try
+            {
+                Users = _userService.LoadUsers();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading users: {ex.Message}", "Load Users Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Users = new ObservableCollection<User>();
+            }
         }
     }
 }

@@ -7,44 +7,43 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Memory_Game.Common;
 using Memory_Game.Model;
+using Memory_Game.Services;
 
 namespace Memory_Game.ViewModel
 {
     public class StatisticsViewModel : ViewModelBase
     {
+        private readonly StatisticsService _statisticsService;
         private ObservableCollection<Statistics> _allStatistics;
-        public ObservableCollection<Statistics> AllStatistics 
-        { 
+        private Statistics _selectedUserStats;
+
+        public ObservableCollection<Statistics> AllStatistics
+        {
             get => _allStatistics;
-            set 
+            set
             {
-                if (_allStatistics != value)
-                {
-                    _allStatistics = value;
-                    OnPropertyChanged();
-                }
+                _allStatistics = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasStatistics));
+                UpdateAggregateStats();
             }
         }
 
-        private Statistics _selectedUserStats;
-        public Statistics SelectedUserStats 
+        public Statistics SelectedUserStats
         {
             get => _selectedUserStats;
-            set 
+            set
             {
-                if (_selectedUserStats != value)
-                {
-                    _selectedUserStats = value;
-                    OnPropertyChanged();
-                }
+                _selectedUserStats = value;
+                OnPropertyChanged();
             }
         }
 
         private string _selectedUser;
-        public string SelectedUser 
-        { 
+        public string SelectedUser
+        {
             get => _selectedUser;
-            set 
+            set
             {
                 if (_selectedUser != value)
                 {
@@ -60,14 +59,22 @@ namespace Memory_Game.ViewModel
         public double AverageWinRate => HasStatistics ? AllStatistics.Average(s => s.WinRate) : 0;
         public int TotalGamesPlayed => HasStatistics ? AllStatistics.Sum(s => s.GamesPlayed) : 0;
         public int TotalGamesWon => HasStatistics ? AllStatistics.Sum(s => s.GamesWon) : 0;
+        public TimeSpan BestOverallTime => HasStatistics ?
+            TimeSpan.FromTicks(AllStatistics.Min(s => s.BestTime.Ticks)) :
+            TimeSpan.Zero;
+        public double AverageMovesPerGame => HasStatistics ?
+            AllStatistics.Average(s => s.AverageMovesPerGame) : 0;
 
         public ICommand RefreshStatisticsCommand { get; }
         public ICommand SelectUserStatsCommand { get; }
-
         public ICommand ClearStatisticsCommand { get; }
+        public ICommand CloseCommand { get; }
 
         public StatisticsViewModel()
         {
+            _statisticsService = new StatisticsService();
+            LoadStatistics();
+
             // Initialize commands
             RefreshStatisticsCommand = new RelayCommand(
                 execute: (object param) => ExecuteRefreshStatistics(),
@@ -84,11 +91,10 @@ namespace Memory_Game.ViewModel
                 canExecute: (object param) => HasStatistics
             );
 
-            // Initialize statistics collection
-            AllStatistics = new ObservableCollection<Statistics>();
-
-            // Load initial statistics
-            LoadStatistics();
+            CloseCommand = new RelayCommand(
+                execute: (param) => ExecuteClose(),
+                canExecute: (param) => true
+            );
         }
 
         private void ExecuteRefreshStatistics()
@@ -125,8 +131,12 @@ namespace Memory_Game.ViewModel
 
         private void LoadStatistics()
         {
-            // Load statistics from file
-            // Will be implemented with statistics service
+            var stats = _statisticsService.LoadStatistics();
+            AllStatistics = new ObservableCollection<Statistics>(stats.Values);
+            if (HasStatistics)
+            {
+                SelectedUserStats = AllStatistics.First();
+            }
         }
 
         private void UpdateSelectedUserStats()
@@ -144,6 +154,20 @@ namespace Memory_Game.ViewModel
         {
             // Save statistics to file
             // Will be implemented with statistics service
+        }
+
+        private void UpdateAggregateStats()
+        {
+            OnPropertyChanged(nameof(AverageWinRate));
+            OnPropertyChanged(nameof(TotalGamesPlayed));
+            OnPropertyChanged(nameof(TotalGamesWon));
+            OnPropertyChanged(nameof(BestOverallTime));
+            OnPropertyChanged(nameof(AverageMovesPerGame));
+        }
+
+        private void ExecuteClose()
+        {
+            // This will be handled by the view
         }
     }
 }

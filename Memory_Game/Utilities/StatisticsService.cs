@@ -60,7 +60,7 @@ namespace Memory_Game.Utilities
 
                 if (userStats == null)
                 {
-                    userStats = new Statistics(username, 0, 0);
+                    userStats = new Statistics();
                     statistics.Add(userStats);
                 }
 
