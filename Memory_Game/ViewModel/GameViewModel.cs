@@ -22,6 +22,7 @@ namespace Memory_Game.ViewModel
     public class GameViewModel : ViewModelBase
     {
         private readonly StatisticsService _statisticsService;
+        private readonly GameSaveService _gameSaveService;
 
         private Game _currentGame;
         public Game CurrentGame
@@ -29,10 +30,8 @@ namespace Memory_Game.ViewModel
             get => _currentGame;
             set
             {
-                if (_currentGame != value)
+                if (SetProperty(ref _currentGame, value))
                 {
-                    _currentGame = value;
-                    OnPropertyChanged();
                     OnPropertyChanged(nameof(IsGameActive));
                     OnPropertyChanged(nameof(RemainingTime));
                 }
@@ -45,10 +44,8 @@ namespace Memory_Game.ViewModel
             get => _selectedCategory;
             set
             {
-                if (_selectedCategory != value)
+                if (SetProperty(ref _selectedCategory, value))
                 {
-                    _selectedCategory = value;
-                    OnPropertyChanged();
                     OnPropertyChanged(nameof(CanStartGame));
                 }
             }
@@ -62,10 +59,9 @@ namespace Memory_Game.ViewModel
             {
                 if (value < 2 || value > 6)
                     throw new ArgumentException("Board width must be between 2 and 6");
-                if (_boardWidth != value)
+
+                if (SetProperty(ref _boardWidth, value))
                 {
-                    _boardWidth = value;
-                    OnPropertyChanged();
                     OnPropertyChanged(nameof(CanStartGame));
                 }
             }
@@ -79,10 +75,9 @@ namespace Memory_Game.ViewModel
             {
                 if (value < 2 || value > 6)
                     throw new ArgumentException("Board height must be between 2 and 6");
-                if (_boardHeight != value)
+
+                if (SetProperty(ref _boardHeight, value))
                 {
-                    _boardHeight = value;
-                    OnPropertyChanged();
                     OnPropertyChanged(nameof(CanStartGame));
                 }
             }
@@ -96,12 +91,8 @@ namespace Memory_Game.ViewModel
             {
                 if (value <= TimeSpan.Zero)
                     throw new ArgumentException("Time limit must be greater than zero");
-                if (_timeLimit != value)
-                {
-                    _timeLimit = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(CanStartGame));
-                }
+
+                SetProperty(ref _timeLimit, value);
             }
         }
 
@@ -141,14 +132,7 @@ namespace Memory_Game.ViewModel
         public int Moves
         {
             get => _moves;
-            set
-            {
-                if (_moves != value)
-                {
-                    _moves = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _moves, value);
         }
 
         public int Matches
@@ -156,10 +140,8 @@ namespace Memory_Game.ViewModel
             get => _matches;
             set
             {
-                if (_matches != value)
+                if (SetProperty(ref _matches, value))
                 {
-                    _matches = value;
-                    OnPropertyChanged();
                     CheckGameEnd();
                 }
             }
@@ -171,17 +153,17 @@ namespace Memory_Game.ViewModel
         public bool CanSaveGame => IsGameActive;
         public bool CanLoadGame => true;
 
-        public ICommand NewGameCommand { get; }
-        public ICommand SaveGameCommand { get; }
-        public ICommand LoadGameCommand { get; }
-        public ICommand CardClickCommand { get; }
-        public ICommand PauseGameCommand { get; }
-        public ICommand ResumeGameCommand { get; }
-        public ICommand SelectCategoryCommand { get; }
-        public ICommand SetBoardSizeCommand { get; }
-        public ICommand ShowStatisticsCommand { get; }
-        public ICommand ShowAboutCommand { get; }
-        public ICommand ExitCommand { get; }
+        public ICommand NewGameCommand { get; private set; }
+        public ICommand SaveGameCommand { get; private set; }
+        public ICommand LoadGameCommand { get; private set; }
+        public ICommand CardClickCommand { get; private set; }
+        public ICommand PauseGameCommand { get; private set; }
+        public ICommand ResumeGameCommand { get; private set; }
+        public ICommand SelectCategoryCommand { get; private set; }
+        public ICommand SetBoardSizeCommand { get; private set; }
+        public ICommand ShowStatisticsCommand { get; private set; }
+        public ICommand ShowAboutCommand { get; private set; }
+        public ICommand ExitCommand { get; private set; }
 
         private DispatcherTimer _gameTimer;
         private DateTime _gameStartTime;
@@ -189,7 +171,15 @@ namespace Memory_Game.ViewModel
         public GameViewModel()
         {
             _statisticsService = new StatisticsService();
+            _gameSaveService = new GameSaveService();
 
+            InitializeDefaultValues();
+            InitializeCommands();
+            ExecuteNewGame();
+        }
+
+        private void InitializeDefaultValues()
+        {
             // Initialize properties
             _currentGame = new Game(4, 4, new ObservableCollection<Card>(), TimeSpan.FromMinutes(5), "Animals");
             _selectedCategory = "Animals";
@@ -209,8 +199,10 @@ namespace Memory_Game.ViewModel
                 "Vehicles",
                 "Sports"
             };
+        }
 
-            // Initialize commands
+        private void InitializeCommands()
+        {
             NewGameCommand = new RelayCommand(
                 execute: (param) => ExecuteNewGame(),
                 canExecute: (param) => CanStartGame
@@ -265,9 +257,6 @@ namespace Memory_Game.ViewModel
                 execute: (param) => ExecuteExit(),
                 canExecute: (param) => true
             );
-
-            // Initialize game
-            ExecuteNewGame();
         }
 
         private void ExecuteSelectCategory(string category)
@@ -367,6 +356,8 @@ namespace Memory_Game.ViewModel
         {
             try
             {
+                bool canExit = true;
+
                 if (CurrentGame != null && !CurrentGame.IsGameOver)
                 {
                     var result = MessageBox.Show(
@@ -375,15 +366,36 @@ namespace Memory_Game.ViewModel
                         MessageBoxButton.YesNoCancel,
                         MessageBoxImage.Question);
 
-                    if (result == MessageBoxResult.Cancel)
-                        return;
-
-                    if (result == MessageBoxResult.Yes)
-                        ExecuteSaveGame();
+                    switch (result)
+                    {
+                        case MessageBoxResult.Yes:
+                            ExecuteSaveGame();
+                            break;
+                        case MessageBoxResult.Cancel:
+                            canExit = false;
+                            break;
+                            // For No, just continue with exit
+                    }
                 }
 
-                // Navigate back to login view (to be implemented with navigation service)
-                MessageBox.Show("Exit functionality will be implemented", "Feature Coming Soon", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (canExit)
+                {
+                    // Stop the game timer if it's running
+                    if (_gameTimer != null && _gameTimer.IsEnabled)
+                    {
+                        _gameTimer.Stop();
+                    }
+
+                    // Clear game state
+                    CurrentGame = null;
+                    _firstFlippedCard = null;
+                    _secondFlippedCard = null;
+                    Moves = 0;
+                    Matches = 0;
+
+                    // Navigate back to login view
+                    NavigationService.NavigateTo("LoginView");
+                }
             }
             catch (Exception ex)
             {
@@ -425,22 +437,56 @@ namespace Memory_Game.ViewModel
                     return;
                 }
 
-                var dialog = new SaveFileDialog
+                if (CurrentPlayer == null)
                 {
-                    Filter = "Game files (*.json)|*.json|All files (*.*)|*.*",
-                    InitialDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SavedGames"),
-                    FileName = $"MemoryGame_{DateTime.Now:yyyyMMdd_HHmmss}.json"
+                    MessageBox.Show("Please select a player before saving the game.", "Save Game", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Pause the timer while saving
+                bool wasTimerRunning = false;
+                if (_gameTimer != null && _gameTimer.IsEnabled)
+                {
+                    wasTimerRunning = true;
+                    _gameTimer.Stop();
+                }
+
+                var gameState = new GameState
+                {
+                    Username = CurrentPlayer.Username,
+                    Category = SelectedCategory,
+                    BoardWidth = BoardWidth,
+                    BoardHeight = BoardHeight,
+                    TimeLimit = TimeLimit,
+                    ElapsedTime = CurrentGame.ElapsedTime,
+                    RemainingTime = RemainingTime,
+                    IsTimerPaused = !wasTimerRunning,
+                    Moves = Moves,
+                    Matches = Matches,
+                    Cards = CurrentGame.Cards.Select(c => new CardState
+                    {
+                        ImagePath = c.ImagePath,
+                        IsFlipped = c.IsFlipped,
+                        IsMatched = c.IsMatched,
+                        Position = c.Position,
+                        CardId = c.CardId
+                    }).ToList()
                 };
 
-                if (dialog.ShowDialog() == true)
+                var savedFilePath = _gameSaveService.SaveGame(gameState);
+
+                // Resume timer if it was running
+                if (wasTimerRunning)
                 {
-                    // Save game using GameService (to be implemented)
-                    MessageBox.Show("Game saved successfully!", "Save Game", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _gameTimer.Start();
                 }
+
+                MessageBox.Show($"Game saved successfully!\nFile: {savedFilePath}", "Save Game", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving game: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine($"Save game error: {ex}");
             }
         }
 
@@ -448,15 +494,71 @@ namespace Memory_Game.ViewModel
         {
             try
             {
+                if (CurrentPlayer == null)
+                {
+                    MessageBox.Show("Please select a player first.", "Load Game", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var savedGames = _gameSaveService.GetSavedGames(CurrentPlayer.Username);
+                if (!savedGames.Any())
+                {
+                    MessageBox.Show("No saved games found.", "Load Game", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
                 var dialog = new OpenFileDialog
                 {
                     Filter = "Game files (*.json)|*.json|All files (*.*)|*.*",
-                    InitialDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SavedGames")
+                    InitialDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SavedGames"),
+                    Title = "Select a saved game to load"
                 };
 
                 if (dialog.ShowDialog() == true)
                 {
-                    // Load game using GameService (to be implemented)
+                    var gameState = _gameSaveService.LoadGame(dialog.FileName);
+
+                    // Verify the game belongs to the current player
+                    if (gameState.Username != CurrentPlayer.Username)
+                    {
+                        MessageBox.Show("You can only load your own saved games.", "Load Game", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    // Stop current game timer if running
+                    if (_gameTimer != null && _gameTimer.IsEnabled)
+                    {
+                        _gameTimer.Stop();
+                    }
+
+                    // Restore game state
+                    SelectedCategory = gameState.Category;
+                    BoardWidth = gameState.BoardWidth;
+                    BoardHeight = gameState.BoardHeight;
+                    TimeLimit = gameState.TimeLimit;
+                    Moves = gameState.Moves;
+                    Matches = gameState.Matches;
+
+                    // Create new game with restored cards
+                    CurrentGame = new Game(BoardWidth, BoardHeight,
+                        new ObservableCollection<Card>(
+                            gameState.Cards.Select(c => new Card(
+                                c.ImagePath, c.IsFlipped, c.IsMatched, c.Position, c.CardId))),
+                        TimeLimit, SelectedCategory)
+                    {
+                        ElapsedTime = gameState.ElapsedTime
+                    };
+
+                    // Restore timer state
+                    _gameStartTime = DateTime.Now - gameState.ElapsedTime;
+                    StartGameTimer();
+
+                    // If the game was paused when saved, pause it now
+                    if (gameState.IsTimerPaused)
+                    {
+                        _gameTimer.Stop();
+                    }
+
                     MessageBox.Show("Game loaded successfully!", "Load Game", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }

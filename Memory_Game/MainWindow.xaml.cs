@@ -1,13 +1,5 @@
-﻿using System.Text;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Memory_Game.View;
 
 namespace Memory_Game
@@ -20,13 +12,34 @@ namespace Memory_Game
         public MainWindow()
         {
             InitializeComponent();
-            MainFrame.Navigate(new LoginView());
+            Common.NavigationService.NavigationRequested += NavigationService_NavigationRequested;
+
+            // Start with the login view
+            MainContent.Content = new LoginView();
+        }
+
+        private void NavigationService_NavigationRequested(object sender, Common.NavigationEventArgs e)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                switch (e.ViewName)
+                {
+                    case "LoginView":
+                        MainContent.Content = new LoginView();
+                        break;
+                    case "GameView":
+                        MainContent.Content = new GameView();
+                        break;
+                        // Add other views as needed
+                }
+            });
         }
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             base.OnClosing(e);
-            // Add any cleanup code here if needed
+            // Unsubscribe from events
+            Common.NavigationService.NavigationRequested -= NavigationService_NavigationRequested;
         }
     }
 }
