@@ -384,7 +384,6 @@ namespace Memory_Game.ViewModel
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error in ExecuteSetBoardSize: {ex}");
                 MessageBox.Show(
                     $"Error setting board size: {ex.Message}",
                     "Error",
@@ -505,7 +504,6 @@ namespace Memory_Game.ViewModel
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error in ExecuteNewGame: {ex}");
                 MessageBox.Show($"Error starting new game: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -570,7 +568,6 @@ namespace Memory_Game.ViewModel
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving game: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Debug.WriteLine($"Save game error: {ex}");
             }
         }
 
@@ -759,8 +756,6 @@ namespace Memory_Game.ViewModel
                 string projectRoot = Directory.GetParent(currentDir).Parent.Parent.Parent.Parent.FullName;
                 string basePath = Path.Combine(projectRoot, "Images", SelectedCategory);
 
-                Debug.WriteLine($"Loading images from: {basePath}");
-
                 if (!Directory.Exists(basePath))
                 {
                     MessageBox.Show($"Category folder not found: {basePath}\nPlease create the folder and add images.",
@@ -770,11 +765,9 @@ namespace Memory_Game.ViewModel
 
                 // Get all image files in the category directory
                 var imageFiles = Directory.GetFiles(basePath, "*.png");
-                Debug.WriteLine($"Found {imageFiles.Length} images");
 
                 // Calculate required pairs based on board size
                 int requiredPairs = (BoardWidth * BoardHeight) / 2;
-                Debug.WriteLine($"Required pairs for {BoardWidth}x{BoardHeight} board: {requiredPairs}");
 
                 if (imageFiles.Length < requiredPairs)
                 {
@@ -793,12 +786,10 @@ namespace Memory_Game.ViewModel
                     {
                         // Create a safe URI for the image
                         string safeImagePath = "file:///" + imagePath.Replace("\\", "/");
-                        Debug.WriteLine($"Creating card pair with image: {safeImagePath}");
 
                         // Create two cards with the same image
                         var card1 = new Card(safeImagePath, false, false, position, i);
                         var card2 = new Card(safeImagePath, false, false, position + 1, i);
-                        Debug.WriteLine($"Created pair - Card1(Pos:{position}, Id:{i}), Card2(Pos:{position + 1}, Id:{i})");
 
                         cards.Add(card1);
                         cards.Add(card2);
@@ -827,7 +818,6 @@ namespace Memory_Game.ViewModel
                 for (int i = 0; i < shuffledCards.Count; i++)
                 {
                     shuffledCards[i].Position = i;
-                    Debug.WriteLine($"Shuffled card at position {i}: Image={shuffledCards[i].ImagePath}, Id={shuffledCards[i].CardId}");
                 }
 
                 // Add cards to the game
@@ -901,11 +891,8 @@ namespace Memory_Game.ViewModel
                     _statisticsService.UpdateStatistics(stats);
                 }
 
-                MessageBox.Show(
-                    $"Congratulations! You won!\nMoves: {Moves}\nTime: {CurrentGame.ElapsedTime:mm\\:ss}",
-                    "Game Over",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                // Navigate to victory screen
+                NavigationService.NavigateTo("VictoryView", new { Moves = Moves, Time = CurrentGame.ElapsedTime });
             }
         }
     }

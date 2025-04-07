@@ -29,30 +29,44 @@ namespace Memory_Game.Services
                     var statistics = JsonSerializer.Deserialize<ObservableCollection<Statistics>>(json);
                     return statistics ?? new ObservableCollection<Statistics>();
                 }
+                return new ObservableCollection<Statistics>();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading statistics: {ex.Message}");
+                return new ObservableCollection<Statistics>();
             }
-
-            return new ObservableCollection<Statistics>();
         }
 
-        public void SaveStatistics(ObservableCollection<Statistics> statistics)
+        public bool SaveStatistics(ObservableCollection<Statistics> statistics)
         {
             try
             {
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(statistics, options);
                 File.WriteAllText(_statisticsFilePath, json);
+                return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error saving statistics: {ex.Message}");
+                return false;
             }
         }
 
-        public void UpdateStatistics(Statistics stats)
+        public bool AddGameStatistics(Statistics statistics)
+        {
+            try
+            {
+                var allStatistics = LoadStatistics();
+                allStatistics.Add(statistics);
+                return SaveStatistics(allStatistics);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public bool UpdateStatistics(Statistics stats)
         {
             try
             {
@@ -71,44 +85,44 @@ namespace Memory_Game.Services
                     statistics.Add(stats);
                 }
 
-                SaveStatistics(statistics);
+                return SaveStatistics(statistics);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error updating statistics: {ex.Message}");
+                return false;
             }
         }
 
-        public void DeleteUserStatistics(string username)
+        public bool DeleteUserStatistics(string username)
         {
             try
             {
-                var statistics = LoadStatistics();
-                var userStats = statistics.FirstOrDefault(s => s.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+                var allStatistics = LoadStatistics();
+                var userStatistics = allStatistics.Where(s => s.Username.Equals(username, StringComparison.OrdinalIgnoreCase)).ToList();
 
-                if (userStats != null)
+                foreach (var stat in userStatistics)
                 {
-                    statistics.Remove(userStats);
-                    SaveStatistics(statistics);
+                    allStatistics.Remove(stat);
                 }
+
+                return SaveStatistics(allStatistics);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error deleting user statistics: {ex.Message}");
+                return false;
             }
         }
 
-        public void ClearAllStatistics()
+        public bool ClearAllStatistics()
         {
             try
             {
                 var emptyStatistics = new ObservableCollection<Statistics>();
-                SaveStatistics(emptyStatistics);
-                Debug.WriteLine("All statistics have been cleared");
+                return SaveStatistics(emptyStatistics);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error clearing statistics: {ex.Message}");
+                return false;
             }
         }
     }

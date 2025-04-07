@@ -22,13 +22,11 @@ namespace Memory_Game.Services
                 if (!Directory.Exists(_savesDirectory))
                 {
                     Directory.CreateDirectory(_savesDirectory);
-                    Debug.WriteLine($"Created saves directory at: {_savesDirectory}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error initializing GameSaveService: {ex.Message}");
-                throw;
+                return;
             }
         }
 
@@ -49,24 +47,15 @@ namespace Memory_Game.Services
                 string fileName = $"{gameState.Username}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
                 string filePath = Path.Combine(_savesDirectory, fileName);
 
-                Debug.WriteLine($"Saving game to: {filePath}");
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string json = JsonSerializer.Serialize(gameState, options);
+                File.WriteAllText(filePath, json);
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                string jsonString = JsonSerializer.Serialize(gameState, options);
-                File.WriteAllText(filePath, jsonString);
-
-                Debug.WriteLine("Game saved successfully");
                 return filePath;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error saving game: {ex.Message}");
-                throw new Exception($"Failed to save game: {ex.Message}", ex);
+                return null;
             }
         }
 
@@ -79,22 +68,12 @@ namespace Memory_Game.Services
                     throw new FileNotFoundException("Saved game file not found", filePath);
                 }
 
-                Debug.WriteLine($"Loading game from: {filePath}");
-
-                string jsonString = File.ReadAllText(filePath);
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var gameState = JsonSerializer.Deserialize<GameState>(jsonString, options);
-                Debug.WriteLine("Game loaded successfully");
-                return gameState;
+                string json = File.ReadAllText(filePath);
+                return JsonSerializer.Deserialize<GameState>(json);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading game: {ex.Message}");
-                throw new Exception($"Failed to load game: {ex.Message}", ex);
+                return null;
             }
         }
 
@@ -104,18 +83,15 @@ namespace Memory_Game.Services
             {
                 if (!Directory.Exists(_savesDirectory))
                 {
-                    Debug.WriteLine("Saves directory does not exist");
                     return new List<string>();
                 }
 
-                string[] files = Directory.GetFiles(_savesDirectory, $"{username}_*.json");
-                Debug.WriteLine($"Found {files.Length} saved games for user {username}");
-                return new List<string>(files);
+                string pattern = $"{username}_*.json";
+                return new List<string>(Directory.GetFiles(_savesDirectory, pattern));
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error getting saved games: {ex.Message}");
-                throw new Exception($"Failed to get saved games: {ex.Message}", ex);
+                return new List<string>();
             }
         }
 
@@ -126,13 +102,11 @@ namespace Memory_Game.Services
                 foreach (string file in GetSavedGames(username))
                 {
                     File.Delete(file);
-                    Debug.WriteLine($"Deleted saved game: {file}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error deleting saved games: {ex.Message}");
-                throw new Exception($"Failed to delete saved games: {ex.Message}", ex);
+                return;
             }
         }
     }

@@ -29,11 +29,7 @@ namespace Memory_Game.Services
                 MessageBox.Show($"Project directory: {projectDir}\nUsers file path: {_usersFilePath}", "Debug Info");
 
                 // Create directories if they don't exist
-                if (!Directory.Exists(_userImagesDirectory))
-                {
-                    Directory.CreateDirectory(_userImagesDirectory);
-                    MessageBox.Show($"Created UserImages directory at: {_userImagesDirectory}", "Debug Info");
-                }
+                Directory.CreateDirectory(_userImagesDirectory);
 
                 // Create users.json if it doesn't exist
                 if (!File.Exists(_usersFilePath))
@@ -63,34 +59,28 @@ namespace Memory_Game.Services
                 {
                     string json = File.ReadAllText(_usersFilePath);
                     var users = JsonSerializer.Deserialize<ObservableCollection<User>>(json);
-                    Debug.WriteLine($"Loaded {users?.Count ?? 0} users from {_usersFilePath}");
                     return users ?? new ObservableCollection<User>();
                 }
-                else
-                {
-                    Debug.WriteLine($"Users file not found at: {_usersFilePath}");
-                    return new ObservableCollection<User>();
-                }
+                return new ObservableCollection<User>();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading users: {ex.Message}");
                 return new ObservableCollection<User>();
             }
         }
 
-        public void SaveUsers(ObservableCollection<User> users)
+        public bool SaveUsers(ObservableCollection<User> users)
         {
             try
             {
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(users, options);
                 File.WriteAllText(_usersFilePath, json);
-                Debug.WriteLine($"Saved {users.Count} users to {_usersFilePath}");
+                return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error saving users: {ex.Message}");
+                return false;
             }
         }
 
@@ -101,41 +91,15 @@ namespace Memory_Game.Services
                 var users = LoadUsers();
                 if (users.Any(u => u.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase)))
                 {
-                    Debug.WriteLine($"User {user.Username} already exists");
                     return false;
                 }
 
-                string newImagePath = CopyUserImage(user.ImagePath, user.Username);
-                user.ImagePath = newImagePath;
-
                 users.Add(user);
-                SaveUsers(users);
-                Debug.WriteLine($"Added new user: {user.Username}");
-                return true;
+                return SaveUsers(users);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error adding user: {ex.Message}");
                 return false;
-            }
-        }
-
-        private string CopyUserImage(string sourcePath, string username)
-        {
-            try
-            {
-                string extension = Path.GetExtension(sourcePath);
-                string newFileName = $"{username}{extension}";
-                string newPath = Path.Combine(_userImagesDirectory, newFileName);
-
-                File.Copy(sourcePath, newPath, true);
-                Debug.WriteLine($"Copied user image to: {newPath}");
-                return newPath;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error copying user image: {ex.Message}");
-                return null;
             }
         }
 
@@ -152,29 +116,23 @@ namespace Memory_Game.Services
                     if (!string.IsNullOrEmpty(user.ImagePath) && File.Exists(user.ImagePath))
                     {
                         File.Delete(user.ImagePath);
-                        Debug.WriteLine($"Deleted user image: {user.ImagePath}");
                     }
 
                     // Delete user's statistics
                     _statisticsService.DeleteUserStatistics(username);
-                    Debug.WriteLine($"Deleted statistics for user: {username}");
 
                     users.Remove(user);
-                    SaveUsers(users);
-                    Debug.WriteLine($"Deleted user: {username}");
-                    return true;
+                    return SaveUsers(users);
                 }
-                Debug.WriteLine($"User not found: {username}");
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error deleting user: {ex.Message}");
                 return false;
             }
         }
 
-        public void UpdateUser(User user)
+        public bool UpdateUser(User user)
         {
             try
             {
@@ -183,42 +141,28 @@ namespace Memory_Game.Services
 
                 if (existingUser != null)
                 {
-                    // If image path has changed, copy the new image
-                    if (existingUser.ImagePath != user.ImagePath)
-                    {
-                        string newImagePath = CopyUserImage(user.ImagePath, user.Username);
-                        user.ImagePath = newImagePath;
-                    }
-
-                    // Update user properties
                     existingUser.ImagePath = user.ImagePath;
-                    SaveUsers(users);
-                    Debug.WriteLine($"Updated user: {user.Username}");
+                    return SaveUsers(users);
                 }
-                else
-                {
-                    Debug.WriteLine($"User not found for update: {user.Username}");
-                }
+                return false;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error updating user: {ex.Message}");
+                return false;
             }
         }
 
-        public string SaveUserImage(string sourceImagePath)
+        public string SaveUserImage(string imagePath)
         {
             try
             {
-                string fileName = $"{Guid.NewGuid()}{Path.GetExtension(sourceImagePath)}";
-                string destinationPath = Path.Combine(_userImagesDirectory, fileName);
-                File.Copy(sourceImagePath, destinationPath, true);
-                return destinationPath;
+                string fileName = Path.GetFileName(imagePath);
+                string newPath = Path.Combine(_userImagesDirectory, fileName);
+                File.Copy(imagePath, newPath, true);
+                return newPath;
             }
             catch (Exception ex)
             {
-                // Log error or handle it appropriately
-                Console.WriteLine($"Error saving user image: {ex.Message}");
                 return null;
             }
         }

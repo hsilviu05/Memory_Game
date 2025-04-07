@@ -2,6 +2,9 @@
 using System.Windows.Controls;
 using Memory_Game.View;
 using Memory_Game.ViewModel;
+using Memory_Game.Common;
+using System.Linq;
+using System.Reflection;
 
 namespace Memory_Game
 {
@@ -15,13 +18,12 @@ namespace Memory_Game
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = new StartViewModel();
+            MainContent.Content = new StartView();
             Common.NavigationService.NavigationRequested += NavigationService_NavigationRequested;
-
-            // Start with the login view
-            MainContent.Content = new LoginView();
         }
 
-        private void NavigationService_NavigationRequested(object sender, Common.NavigationEventArgs e)
+        private void NavigationService_NavigationRequested(object sender, NavigationEventArgs e)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -39,7 +41,29 @@ namespace Memory_Game
                         }
                         MainContent.Content = gameView;
                         break;
-                        // Add other views as needed
+                    case "StartView":
+                        MainContent.Content = new StartView();
+                        break;
+                    case "VictoryView":
+                        var victoryView = new VictoryView();
+                        var victoryViewModel = new VictoryViewModel();
+
+                        // Check if parameters were passed and update the ViewModel
+                        if (e.Parameter != null)
+                        {
+                            var properties = e.Parameter.GetType().GetProperties();
+                            var movesProperty = properties.FirstOrDefault(p => p.Name == "Moves");
+                            var timeProperty = properties.FirstOrDefault(p => p.Name == "Time");
+
+                            if (movesProperty != null)
+                                victoryViewModel.Moves = (int)movesProperty.GetValue(e.Parameter);
+                            if (timeProperty != null)
+                                victoryViewModel.Time = (TimeSpan)timeProperty.GetValue(e.Parameter);
+                        }
+
+                        victoryView.DataContext = victoryViewModel;
+                        MainContent.Content = victoryView;
+                        break;
                 }
             });
         }
