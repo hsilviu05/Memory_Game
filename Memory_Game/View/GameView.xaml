@@ -165,15 +165,16 @@
                     <Border Background="#FF2D2D2D"
                             CornerRadius="5"
                             Visibility="{Binding IsFlipped, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid>
-                            <Image Width="100"
-                                   Height="100"
+                        <Viewbox Stretch="Uniform"
+                                 Margin="15"
+                                 Width="90"
+                                 Height="90"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center">
+                            <Image Source="{Binding ImagePath, TargetNullValue={StaticResource DefaultCardImage}}"
                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                   Stretch="Uniform"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Source="{Binding ImagePath, TargetNullValue={StaticResource DefaultCardImage}}"/>
-                        </Grid>
+                                   Stretch="Uniform"/>
+                        </Viewbox>
                     </Border>
 
                     <Grid.Style>
@@ -233,8 +234,11 @@
                 <MenuItem Header="Load Game"
                           Command="{Binding LoadGameCommand}"
                           Style="{StaticResource SubMenuItem}"/>
-                <Separator Background="#FF007ACC"
-                           Margin="0,5"/>
+                <Separator/>
+                <MenuItem Header="Board Size"
+                          Command="{Binding SetBoardSizeCommand}"
+                          Style="{StaticResource SubMenuItem}"/>
+                <Separator/>
                 <MenuItem Header="Exit"
                           Command="{Binding ExitCommand}"
                           Style="{StaticResource SubMenuItem}"/>
@@ -242,9 +246,9 @@
 
             <MenuItem Header="Categories"
                       Style="{StaticResource ModernMenuItem}">
-                <MenuItem Header="Animals"
+                <MenuItem Header="Jordan 1"
                           Command="{Binding SelectCategoryCommand}"
-                          CommandParameter="Animals"
+                          CommandParameter="Jordan 1"
                           Style="{StaticResource SubMenuItem}"/>
                 <MenuItem Header="Fruits"
                           Command="{Binding SelectCategoryCommand}"
@@ -257,18 +261,6 @@
                 <MenuItem Header="Sports"
                           Command="{Binding SelectCategoryCommand}"
                           CommandParameter="Sports"
-                          Style="{StaticResource SubMenuItem}"/>
-            </MenuItem>
-
-            <MenuItem Header="Board Size"
-                      Style="{StaticResource ModernMenuItem}">
-                <MenuItem Header="Standard (4x4)"
-                          Command="{Binding SetBoardSizeCommand}"
-                          CommandParameter="Standard"
-                          Style="{StaticResource SubMenuItem}"/>
-                <MenuItem Header="Custom"
-                          Command="{Binding SetBoardSizeCommand}"
-                          CommandParameter="Custom"
                           Style="{StaticResource SubMenuItem}"/>
             </MenuItem>
 
@@ -338,7 +330,7 @@
 
         <!-- Game Board -->
         <Border Grid.Row="2"
-                Margin="20"
+                Margin="20,10,20,20"
                 Background="#FF1E1E1E"
                 BorderBrush="#FF007ACC"
                 BorderThickness="1"
@@ -350,27 +342,90 @@
                                   Opacity="0.3"/>
             </Border.Effect>
 
-            <ItemsControl ItemsSource="{Binding CurrentGame.Cards}"
-                          Margin="15">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Rows="{Binding CurrentGame.BoardHeight}"
-                                     Columns="{Binding CurrentGame.BoardWidth}"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ContentControl Content="{Binding}"
-                                        ContentTemplate="{StaticResource CardContentTemplate}">
-                            <ContentControl.RenderTransformOrigin>
-                                <Point X="0.5"
-                                       Y="0.5"/>
-                            </ContentControl.RenderTransformOrigin>
-                        </ContentControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                <Viewbox Stretch="Uniform"
+                         Margin="20">
+                    <ItemsControl ItemsSource="{Binding CurrentGame.Cards}"
+                                  Width="600"
+                                  Height="600">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="{Binding CurrentGame.BoardHeight}"
+                                             Columns="{Binding CurrentGame.BoardWidth}"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Margin"
+                                        Value="5"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource CardButton}"
+                                        Command="{Binding DataContext.CardClickCommand, 
+                                                  RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}">
+                                    <Grid Width="120"
+                                          Height="120">
+                                        <!-- Back of Card -->
+                                        <Border Background="#FF007ACC"
+                                                CornerRadius="5"
+                                                Visibility="{Binding IsFlipped, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=inverse}">
+                                            <TextBlock Text="?"
+                                                       FontSize="36"
+                                                       FontWeight="Bold"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Front of Card -->
+                                        <Border Background="#FF2D2D2D"
+                                                CornerRadius="5"
+                                                Visibility="{Binding IsFlipped, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Viewbox Stretch="Uniform"
+                                                     Margin="15"
+                                                     Width="90"
+                                                     Height="90"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center">
+                                                <Image Source="{Binding ImagePath, TargetNullValue={StaticResource DefaultCardImage}}"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                       Stretch="Uniform"/>
+                                            </Viewbox>
+                                        </Border>
+
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFlipped}"
+                                                                 Value="True">
+                                                        <Setter Property="RenderTransform">
+                                                            <Setter.Value>
+                                                                <ScaleTransform ScaleX="-1"
+                                                                                ScaleY="1"
+                                                                                CenterX="60"
+                                                                                CenterY="60"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Viewbox>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

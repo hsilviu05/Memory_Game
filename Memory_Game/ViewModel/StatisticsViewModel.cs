@@ -8,6 +8,8 @@ using System.Windows.Input;
 using Memory_Game.Common;
 using Memory_Game.Model;
 using Memory_Game.Services;
+using System.Windows;
+using Memory_Game.View;
 
 namespace Memory_Game.ViewModel
 {
@@ -167,7 +169,11 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteClose()
         {
-            // This will be handled by the view
+            var window = System.Windows.Application.Current.Windows
+                .OfType<Window>()
+                .FirstOrDefault(w => w.Content is StatisticsView);
+
+            window?.Close();
         }
     }
 }

@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Memory_Game.ViewModel;
 
 namespace Memory_Game.View
 {
@@ -19,9 +20,13 @@ namespace Memory_Game.View
     /// </summary>
     public partial class GameView : UserControl
     {
+        private GameViewModel _viewModel;
+
         public GameView()
         {
             InitializeComponent();
+            _viewModel = new GameViewModel();
+            DataContext = _viewModel;
         }
     }
 }

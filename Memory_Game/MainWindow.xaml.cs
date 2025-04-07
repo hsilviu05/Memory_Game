@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using Memory_Game.View;
+using Memory_Game.ViewModel;
 
 namespace Memory_Game
 {
@@ -9,6 +10,8 @@ namespace Memory_Game
     /// </summary>
     public partial class MainWindow : Window
     {
+        private GameViewModel _gameViewModel;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -28,7 +31,13 @@ namespace Memory_Game
                         MainContent.Content = new LoginView();
                         break;
                     case "GameView":
-                        MainContent.Content = new GameView();
+                        var gameView = new GameView();
+                        _gameViewModel = (GameViewModel)gameView.DataContext;
+                        if (e.Parameter != null && e.Parameter is Memory_Game.Model.User user)
+                        {
+                            _gameViewModel.CurrentPlayer = user;
+                        }
+                        MainContent.Content = gameView;
                         break;
                         // Add other views as needed
                 }

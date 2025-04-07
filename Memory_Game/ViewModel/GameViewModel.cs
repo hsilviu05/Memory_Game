@@ -106,6 +106,13 @@ namespace Memory_Game.ViewModel
                 {
                     _currentPlayer = value;
                     OnPropertyChanged();
+
+                    // Automatically select a category and start a new game when user is set
+                    if (_currentPlayer != null && CurrentGame == null)
+                    {
+                        SelectedCategory = "Jordan 1"; // Changed from Animals to Jordan 1
+                        ExecuteNewGame();
+                    }
                 }
             }
         }
@@ -175,14 +182,12 @@ namespace Memory_Game.ViewModel
 
             InitializeDefaultValues();
             InitializeCommands();
-            ExecuteNewGame();
+            // Don't call ExecuteNewGame() here
         }
 
         private void InitializeDefaultValues()
         {
             // Initialize properties
-            _currentGame = new Game(4, 4, new ObservableCollection<Card>(), TimeSpan.FromMinutes(5), "Animals");
-            _selectedCategory = "Animals";
             _boardWidth = 4;
             _boardHeight = 4;
             _timeLimit = TimeSpan.FromMinutes(5);
@@ -190,15 +195,19 @@ namespace Memory_Game.ViewModel
             _matches = 0;
             _firstFlippedCard = null;
             _secondFlippedCard = null;
+            _selectedCategory = "Jordan 1"; // Changed from Animals to Jordan 1
 
             // Initialize categories
             Categories = new ObservableCollection<string>
             {
-                "Animals",
+                "Jordan 1",  // Changed from Animals to Jordan 1
                 "Fruits",
                 "Vehicles",
                 "Sports"
             };
+
+            // Don't create a game immediately
+            CurrentGame = null;
         }
 
         private void InitializeCommands()
@@ -238,9 +247,9 @@ namespace Memory_Game.ViewModel
                 canExecute: (category) => !string.IsNullOrEmpty(category)
             );
 
-            SetBoardSizeCommand = new RelayCommand<string>(
-                execute: (size) => ExecuteSetBoardSize(size),
-                canExecute: (size) => !string.IsNullOrEmpty(size)
+            SetBoardSizeCommand = new RelayCommand(
+                execute: (param) => ExecuteSetBoardSize(),
+                canExecute: (param) => !IsGameActive || CurrentGame == null
             );
 
             ShowStatisticsCommand = new RelayCommand(
@@ -263,8 +272,6 @@ namespace Memory_Game.ViewModel
         {
             try
             {
-                MessageBox.Show($"Selected category: {category}", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
-                SelectedCategory = category;
                 if (CurrentGame != null && !CurrentGame.IsGameOver)
                 {
                     var result = MessageBox.Show(
@@ -276,6 +283,8 @@ namespace Memory_Game.ViewModel
                     if (result == MessageBoxResult.No)
                         return;
                 }
+
+                SelectedCategory = category;
                 ExecuteNewGame();
             }
             catch (Exception ex)
@@ -284,35 +293,81 @@ namespace Memory_Game.ViewModel
             }
         }
 
-        private void ExecuteSetBoardSize(string size)
+        private void ExecuteSetBoardSize()
         {
             try
             {
-                if (size == "Standard")
-                {
-                    BoardWidth = 4;
-                    BoardHeight = 4;
-                }
-                else
-                {
-                    MessageBox.Show("Custom size selection will be implemented", "Feature Coming Soon", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-
+                // Check if there's an active game
                 if (CurrentGame != null && !CurrentGame.IsGameOver)
                 {
                     var result = MessageBox.Show(
-                        "Changing board size will start a new game. Continue?",
-                        "Confirm Size Change",
+                        "Changing the board size will start a new game. Do you want to continue?",
+                        "Confirm Board Size Change",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question);
 
-                    if (result == MessageBoxResult.Yes)
-                        ExecuteNewGame();
+                    if (result == MessageBoxResult.No)
+                        return;
+                }
+
+                var dialog = new BoardSizeDialog(BoardWidth, BoardHeight);
+                if (Application.Current.MainWindow != null)
+                {
+                    dialog.Owner = Application.Current.MainWindow;
+                    dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                }
+
+                if (dialog.ShowDialog() == true)
+                {
+                    // Validate the new board size
+                    if (dialog.BoardWidth * dialog.BoardHeight % 2 != 0)
+                    {
+                        MessageBox.Show(
+                            "The board must have an even number of cards for matching pairs.",
+                            "Invalid Board Size",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    // Update board dimensions
+                    BoardWidth = dialog.BoardWidth;
+                    BoardHeight = dialog.BoardHeight;
+
+                    // Stop the current game timer if it's running
+                    if (_gameTimer != null && _gameTimer.IsEnabled)
+                    {
+                        _gameTimer.Stop();
+                    }
+
+                    // Create new game with the new board size
+                    CurrentGame = new Game(BoardWidth, BoardHeight, new ObservableCollection<Card>(), TimeLimit, SelectedCategory);
+
+                    // Reset game state
+                    _firstFlippedCard = null;
+                    _secondFlippedCard = null;
+                    Moves = 0;
+                    Matches = 0;
+
+                    // Initialize cards for the new game
+                    InitializeCards();
+
+                    // Start the game timer
+                    StartGameTimer();
+
+                    // Notify UI of changes
+                    OnPropertyChanged(nameof(IsGameActive));
+                    OnPropertyChanged(nameof(RemainingTime));
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error setting board size: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine($"Error in ExecuteSetBoardSize: {ex}");
+                MessageBox.Show(
+                    $"Error setting board size: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -407,22 +462,32 @@ namespace Memory_Game.ViewModel
         {
             try
             {
+                // Stop existing timer if running
+                if (_gameTimer != null && _gameTimer.IsEnabled)
+                {
+                    _gameTimer.Stop();
+                }
+
                 // Reset game state
                 _firstFlippedCard = null;
                 _secondFlippedCard = null;
                 Moves = 0;
                 Matches = 0;
 
-                // Create a new game with the current settings
+                // Create new game
                 CurrentGame = new Game(BoardWidth, BoardHeight, new ObservableCollection<Card>(), TimeLimit, SelectedCategory);
+                CurrentGame.IsGameOver = false;
 
-                // Initialize the cards
+                // Initialize cards but don't start timer yet
                 InitializeCards();
 
-                StartGameTimer();
+                // Notify UI of changes
+                OnPropertyChanged(nameof(IsGameActive));
+                OnPropertyChanged(nameof(RemainingTime));
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Error in ExecuteNewGame: {ex}");
                 MessageBox.Show($"Error starting new game: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -570,60 +635,49 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteCardClick(Card card)
         {
-            if (card == null || card.IsMatched || card.IsFlipped ||
-                (_secondFlippedCard != null && _firstFlippedCard != null)) return;
+            if (card == null || !IsGameActive || card.IsMatched)
+                return;
 
-            // Flip the card
-            card.IsFlipped = true;
-            OnPropertyChanged(nameof(CurrentGame)); // Force UI update
+            // Start timer on first card flip if it's not running
+            if (_gameTimer == null || !_gameTimer.IsEnabled)
+            {
+                StartGameTimer();
+            }
 
+            // Rest of the card click logic
             if (_firstFlippedCard == null)
             {
-                // First card flipped
                 _firstFlippedCard = card;
-                Debug.WriteLine($"First card flipped - CardId: {card.CardId}, Position: {card.Position}, Image: {card.ImagePath}");
+                card.IsFlipped = true;
             }
             else if (_secondFlippedCard == null && card != _firstFlippedCard)
             {
-                // Second card flipped
                 _secondFlippedCard = card;
+                card.IsFlipped = true;
                 Moves++;
-                Debug.WriteLine($"Second card flipped - CardId: {card.CardId}, Position: {card.Position}, Image: {card.ImagePath}");
-                Debug.WriteLine($"Comparing cards - First CardId: {_firstFlippedCard.CardId}, Second CardId: {_secondFlippedCard.CardId}");
 
                 // Check for match
                 if (_firstFlippedCard.ImagePath == _secondFlippedCard.ImagePath)
                 {
-                    Debug.WriteLine("Match found!");
-                    // Match found
                     _firstFlippedCard.IsMatched = true;
                     _secondFlippedCard.IsMatched = true;
                     Matches++;
-
-                    // Reset for next pair
                     _firstFlippedCard = null;
                     _secondFlippedCard = null;
-
-                    // Force UI update
-                    OnPropertyChanged(nameof(CurrentGame));
                 }
                 else
                 {
-                    Debug.WriteLine("No match found - flipping cards back");
-                    // No match, flip cards back after delay
-                    Task.Delay(1000).ContinueWith(_ =>
+                    // Hide cards after delay
+                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+                    timer.Tick += (s, e) =>
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            if (_firstFlippedCard != null)
-                                _firstFlippedCard.IsFlipped = false;
-                            if (_secondFlippedCard != null)
-                                _secondFlippedCard.IsFlipped = false;
-                            _firstFlippedCard = null;
-                            _secondFlippedCard = null;
-                            OnPropertyChanged(nameof(CurrentGame)); // Force UI update
-                        });
-                    });
+                        _firstFlippedCard.IsFlipped = false;
+                        _secondFlippedCard.IsFlipped = false;
+                        _firstFlippedCard = null;
+                        _secondFlippedCard = null;
+                        timer.Stop();
+                    };
+                    timer.Start();
                 }
             }
         }
@@ -648,6 +702,11 @@ namespace Memory_Game.ViewModel
         {
             try
             {
+                if (CurrentGame == null)
+                {
+                    CurrentGame = new Game(BoardWidth, BoardHeight, new ObservableCollection<Card>(), TimeLimit, SelectedCategory);
+                }
+
                 // Clear existing cards
                 CurrentGame.Cards.Clear();
 
@@ -669,9 +728,13 @@ namespace Memory_Game.ViewModel
                 var imageFiles = Directory.GetFiles(basePath, "*.png");
                 Debug.WriteLine($"Found {imageFiles.Length} images");
 
-                if (imageFiles.Length < 8)
+                // Calculate required pairs based on board size
+                int requiredPairs = (BoardWidth * BoardHeight) / 2;
+                Debug.WriteLine($"Required pairs for {BoardWidth}x{BoardHeight} board: {requiredPairs}");
+
+                if (imageFiles.Length < requiredPairs)
                 {
-                    MessageBox.Show($"Not enough images in the {SelectedCategory} category.\nFound {imageFiles.Length} images, need at least 8.\nPlease add more images to: {basePath}",
+                    MessageBox.Show($"Not enough images in the {SelectedCategory} category.\nFound {imageFiles.Length} images, need at least {requiredPairs}.\nPlease add more images to: {basePath}",
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -679,7 +742,7 @@ namespace Memory_Game.ViewModel
                 // Create pairs of cards with images
                 var cards = new List<Card>();
                 int position = 0;
-                for (int i = 0; i < Math.Min(8, imageFiles.Length); i++)
+                for (int i = 0; i < requiredPairs; i++)
                 {
                     string imagePath = imageFiles[i];
                     try
@@ -687,15 +750,6 @@ namespace Memory_Game.ViewModel
                         // Create a safe URI for the image
                         string safeImagePath = "file:///" + imagePath.Replace("\\", "/");
                         Debug.WriteLine($"Creating card pair with image: {safeImagePath}");
-
-                        // Test loading the image
-                        var testImage = new BitmapImage();
-                        testImage.BeginInit();
-                        testImage.UriSource = new Uri(safeImagePath);
-                        testImage.CacheOption = BitmapCacheOption.OnLoad;
-                        testImage.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                        testImage.EndInit();
-                        testImage.Freeze(); // Make it thread-safe
 
                         // Create two cards with the same image
                         var card1 = new Card(safeImagePath, false, false, position, i);
@@ -714,9 +768,9 @@ namespace Memory_Game.ViewModel
                     }
                 }
 
-                if (cards.Count < 16)
+                if (cards.Count < BoardWidth * BoardHeight)
                 {
-                    MessageBox.Show($"Could not create enough valid card pairs. Found {cards.Count / 2} valid pairs, need 8.",
+                    MessageBox.Show($"Could not create enough valid card pairs. Found {cards.Count / 2} valid pairs, need {requiredPairs}.",
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -750,50 +804,50 @@ namespace Memory_Game.ViewModel
 
         private void StartGameTimer()
         {
+            _gameStartTime = DateTime.Now;
             _gameTimer = new DispatcherTimer();
             _gameTimer.Interval = TimeSpan.FromSeconds(1);
-            _gameTimer.Tick += GameTimer_Tick;
-            _gameStartTime = DateTime.Now;
-            _gameTimer.Start();
-        }
-
-        private void GameTimer_Tick(object sender, EventArgs e)
-        {
-            var elapsed = DateTime.Now - _gameStartTime;
-            CurrentGame.ElapsedTime = elapsed;
-
-            // Check if time limit reached
-            if (elapsed >= TimeLimit)
+            _gameTimer.Tick += (s, e) =>
             {
-                _gameTimer.Stop();
-                CurrentGame.IsGameOver = true;
-                CurrentGame.IsWon = false;
-
-                // Save statistics
-                if (CurrentPlayer != null)
+                if (CurrentGame != null)
                 {
-                    _statisticsService.UpdatePlayerStats(
-                        CurrentPlayer.Username,
-                        false,
-                        elapsed,
-                        Moves
-                    );
+                    CurrentGame.ElapsedTime = DateTime.Now - _gameStartTime;
+                    OnPropertyChanged(nameof(RemainingTime));
+
+                    if (RemainingTime <= TimeSpan.Zero)
+                    {
+                        _gameTimer.Stop();
+                        CurrentGame.IsGameOver = true;
+                        CurrentGame.IsWon = false;
+
+                        // Update statistics for time-out loss
+                        if (CurrentPlayer != null)
+                        {
+                            _statisticsService.UpdatePlayerStats(
+                                CurrentPlayer.Username,
+                                false,
+                                CurrentGame.ElapsedTime,
+                                Moves
+                            );
+                        }
+
+                        MessageBox.Show("Time's up! Game Over!", "Game Over", MessageBoxButton.OK, MessageBoxImage.Information);
+                        OnPropertyChanged(nameof(IsGameActive));
+                    }
                 }
-
-                MessageBox.Show(
-                    "Time's up! Game Over.",
-                    "Game Over",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-            }
-
-            OnPropertyChanged(nameof(RemainingTime));
+            };
+            _gameTimer.Start();
         }
 
         private void CheckGameEnd()
         {
             if (Matches == 8) // All pairs matched
             {
+                if (_gameTimer != null && _gameTimer.IsEnabled)
+                {
+                    _gameTimer.Stop();
+                }
+
                 CurrentGame.IsGameOver = true;
                 CurrentGame.IsWon = true;
 
