@@ -1,0 +1,129 @@
+<Window x:Class="Memory_Game.View.AboutView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Memory_Game.View"
+        mc:Ignorable="d"
+        Title="About Memory Game"
+        Height="400"
+        Width="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#1E1E1E">
+
+    <Window.Resources>
+        <Style x:Key="TitleText"
+               TargetType="TextBlock">
+            <Setter Property="FontSize"
+                    Value="32"/>
+            <Setter Property="FontWeight"
+                    Value="Bold"/>
+            <Setter Property="Foreground"
+                    Value="#00BFFF"/>
+            <Setter Property="HorizontalAlignment"
+                    Value="Center"/>
+            <Setter Property="Margin"
+                    Value="0,20,0,30"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="20"
+                                      ShadowDepth="0"
+                                      Color="#00BFFF"
+                                      Opacity="0.5"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="InfoText"
+               TargetType="TextBlock">
+            <Setter Property="FontSize"
+                    Value="16"/>
+            <Setter Property="Foreground"
+                    Value="White"/>
+            <Setter Property="Margin"
+                    Value="0,10"/>
+        </Style>
+
+        <Style x:Key="EmailLink"
+               TargetType="TextBlock">
+            <Setter Property="FontSize"
+                    Value="16"/>
+            <Setter Property="Foreground"
+                    Value="#00BFFF"/>
+            <Setter Property="Margin"
+                    Value="0,10"/>
+            <Setter Property="Cursor"
+                    Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="Foreground"
+                            Value="#FF5C2D91"/>
+                    <Setter Property="TextDecorations"
+                            Value="Underline"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Text="Memory Game"
+                   Style="{StaticResource TitleText}"/>
+
+        <!-- Info -->
+        <StackPanel Grid.Row="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <TextBlock Text="Created by:"
+                       Style="{StaticResource InfoText}"/>
+            <TextBlock Text="Hermeneanu Ionut Silviu"
+                       Style="{StaticResource InfoText}"
+                       FontWeight="Bold"/>
+
+            <TextBlock Text="Email:"
+                       Style="{StaticResource InfoText}"
+                       Margin="0,20,0,0"/>
+            <TextBlock Text="her.slviu.i@gmail.com"
+                       Style="{StaticResource EmailLink}"
+                       MouseLeftButtonDown="EmailLink_MouseLeftButtonDown"/>
+
+            <TextBlock Text="Group: LF232"
+                       Style="{StaticResource InfoText}"
+                       Margin="0,20,0,0" Height="22"/>
+            <TextBlock Text="Specialization: Informatica"
+                       Style="{StaticResource InfoText}"/>
+        </StackPanel>
+
+        <!-- Close Button -->
+        <Button Grid.Row="2"
+                Content="Close"
+                Width="100"
+                Height="40"
+                Background="#00BFFF"
+                Foreground="White"
+                BorderThickness="0"
+                Click="CloseButton_Click"
+                HorizontalAlignment="Center"
+                Margin="0,20,0,0">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver"
+                                 Value="True">
+                            <Setter Property="Background"
+                                    Value="#FF5C2D91"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+    </Grid>
+</Window> 

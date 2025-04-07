@@ -12,9 +12,9 @@ namespace Memory_Game.Model
 {
     public class User : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
         private string _username;
+        private string _imagePath;
+
         public string Username
         {
             get => _username;
@@ -30,7 +30,6 @@ namespace Memory_Game.Model
             }
         }
 
-        private string _imagePath;
         public string ImagePath
         {
             get => _imagePath;
@@ -59,6 +58,8 @@ namespace Memory_Game.Model
                 }
             }
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public User() { }
         public User(string username, string imagePath, bool isSelected)

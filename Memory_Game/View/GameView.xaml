@@ -234,6 +234,9 @@
                 <MenuItem Header="Load Game"
                           Command="{Binding LoadGameCommand}"
                           Style="{StaticResource SubMenuItem}"/>
+                <MenuItem Header="Manage Categories"
+                          Command="{Binding ManageCategoriesCommand}"
+                          Style="{StaticResource SubMenuItem}"/>
                 <Separator/>
                 <MenuItem Header="Board Size"
                           Command="{Binding SetBoardSizeCommand}"
@@ -246,22 +249,18 @@
 
             <MenuItem Header="Categories"
                       Style="{StaticResource ModernMenuItem}">
-                <MenuItem Header="Jordan 1"
-                          Command="{Binding SelectCategoryCommand}"
-                          CommandParameter="Jordan 1"
-                          Style="{StaticResource SubMenuItem}"/>
-                <MenuItem Header="Fruits"
-                          Command="{Binding SelectCategoryCommand}"
-                          CommandParameter="Fruits"
-                          Style="{StaticResource SubMenuItem}"/>
-                <MenuItem Header="Vehicles"
-                          Command="{Binding SelectCategoryCommand}"
-                          CommandParameter="Vehicles"
-                          Style="{StaticResource SubMenuItem}"/>
-                <MenuItem Header="Sports"
-                          Command="{Binding SelectCategoryCommand}"
-                          CommandParameter="Sports"
-                          Style="{StaticResource SubMenuItem}"/>
+                <MenuItem.ItemsSource>
+                    <Binding Path="Categories"/>
+                </MenuItem.ItemsSource>
+                <MenuItem.ItemTemplate>
+                    <DataTemplate>
+                        <MenuItem Header="{Binding Name}"
+                                  Command="{Binding DataContext.SelectCategoryCommand, 
+                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  CommandParameter="{Binding Name}"
+                                  Style="{StaticResource SubMenuItem}"/>
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
             </MenuItem>
 
             <MenuItem Header="Help"
@@ -280,6 +279,7 @@
               Margin="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -300,10 +300,66 @@
             <!-- Timer -->
             <TextBlock Grid.Column="1"
                        Style="{StaticResource TimerText}"
-                       Text="{Binding RemainingTime, Converter={StaticResource TimeSpanToMinutesSecondsConverter}}"/>
+                       Text="{Binding RemainingTime, Converter={StaticResource TimeSpanToMinutesSecondsConverter}}"
+                       Margin="0,0,15,0"/>
+
+            <!-- Pause/Resume Button -->
+            <Button Grid.Column="2"
+                    Width="40"
+                    Height="40"
+                    Margin="0,0,15,0"
+                    Background="Transparent"
+                    BorderBrush="#007ACC"
+                    BorderThickness="2"
+                    Command="{Binding PauseGameCommand}"
+                    Visibility="{Binding IsGameActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter Property="Background"
+                                        Value="#3F007ACC"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsGamePaused}"
+                                         Value="True">
+                                <Setter Property="Command"
+                                        Value="{Binding ResumeGameCommand}"/>
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <Path Data="M5,5 L15,12 L5,19 Z"
+                                              Fill="White"
+                                              Stretch="Uniform"
+                                              Margin="3,0,0,0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsGamePaused}"
+                                         Value="False">
+                                <Setter Property="Command"
+                                        Value="{Binding PauseGameCommand}"/>
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Center">
+                                            <Rectangle Width="4"
+                                                       Height="15"
+                                                       Fill="White"
+                                                       Margin="0,0,4,0"/>
+                                            <Rectangle Width="4"
+                                                       Height="15"
+                                                       Fill="White"/>
+                                        </StackPanel>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
 
             <!-- Game Stats -->
-            <StackPanel Grid.Column="2"
+            <StackPanel Grid.Column="3"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right">
                 <TextBlock Text="Moves: "

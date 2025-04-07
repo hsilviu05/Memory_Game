@@ -15,6 +15,7 @@ namespace Memory_Game.Model
         public TimeSpan RemainingTime { get; set; }
         public DateTime SavedAt { get; set; }
         public bool IsTimerPaused { get; set; }
+        public bool IsPaused { get; set; }
         public int Moves { get; set; }
         public int Matches { get; set; }
         public List<CardState> Cards { get; set; }

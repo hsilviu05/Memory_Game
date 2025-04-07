@@ -1,76 +1,115 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Memory_Game.Model;
+using System.Diagnostics;
 
 namespace Memory_Game.Services
 {
     public class StatisticsService
     {
-        private readonly string _statsFilePath;
+        private readonly string _statisticsFilePath;
 
         public StatisticsService()
         {
-            string appDataPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "MemoryGame"
-            );
-            Directory.CreateDirectory(appDataPath);
-            _statsFilePath = Path.Combine(appDataPath, "statistics.json");
+            string projectDir = Directory.GetCurrentDirectory();
+            _statisticsFilePath = Path.Combine(projectDir, "statistics.json");
         }
 
-        public Dictionary<string, Statistics> LoadStatistics()
+        public ObservableCollection<Statistics> LoadStatistics()
         {
             try
             {
-                if (File.Exists(_statsFilePath))
+                if (File.Exists(_statisticsFilePath))
                 {
-                    string jsonString = File.ReadAllText(_statsFilePath);
-                    return JsonSerializer.Deserialize<Dictionary<string, Statistics>>(jsonString)
-                           ?? new Dictionary<string, Statistics>();
+                    string json = File.ReadAllText(_statisticsFilePath);
+                    var statistics = JsonSerializer.Deserialize<ObservableCollection<Statistics>>(json);
+                    return statistics ?? new ObservableCollection<Statistics>();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading statistics: {ex.Message}");
+                Debug.WriteLine($"Error loading statistics: {ex.Message}");
             }
-            return new Dictionary<string, Statistics>();
+
+            return new ObservableCollection<Statistics>();
         }
 
-        public void SaveStatistics(Dictionary<string, Statistics> statistics)
+        public void SaveStatistics(ObservableCollection<Statistics> statistics)
         {
             try
             {
-                string jsonString = JsonSerializer.Serialize(statistics, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                File.WriteAllText(_statsFilePath, jsonString);
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string json = JsonSerializer.Serialize(statistics, options);
+                File.WriteAllText(_statisticsFilePath, json);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving statistics: {ex.Message}");
+                Debug.WriteLine($"Error saving statistics: {ex.Message}");
             }
         }
 
-        public void UpdatePlayerStats(string username, bool isWon, TimeSpan gameTime, int moves)
+        public void UpdateStatistics(Statistics stats)
         {
-            var statistics = LoadStatistics();
-            if (!statistics.ContainsKey(username))
+            try
             {
-                statistics[username] = new Statistics(username);
+                var statistics = LoadStatistics();
+                var existingStats = statistics.FirstOrDefault(s => s.Username.Equals(stats.Username, StringComparison.OrdinalIgnoreCase));
+
+                if (existingStats != null)
+                {
+                    existingStats.GamesPlayed = stats.GamesPlayed;
+                    existingStats.GamesWon = stats.GamesWon;
+                    existingStats.BestTime = stats.BestTime;
+                    existingStats.TotalMoves = stats.TotalMoves;
+                }
+                else
+                {
+                    statistics.Add(stats);
+                }
+
+                SaveStatistics(statistics);
             }
-            statistics[username].UpdateStats(isWon, gameTime, moves);
-            SaveStatistics(statistics);
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating statistics: {ex.Message}");
+            }
         }
 
-        public Statistics GetPlayerStats(string username)
+        public void DeleteUserStatistics(string username)
         {
-            var statistics = LoadStatistics();
-            return statistics.ContainsKey(username)
-                ? statistics[username]
-                : new Statistics(username);
+            try
+            {
+                var statistics = LoadStatistics();
+                var userStats = statistics.FirstOrDefault(s => s.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+
+                if (userStats != null)
+                {
+                    statistics.Remove(userStats);
+                    SaveStatistics(statistics);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error deleting user statistics: {ex.Message}");
+            }
+        }
+
+        public void ClearAllStatistics()
+        {
+            try
+            {
+                var emptyStatistics = new ObservableCollection<Statistics>();
+                SaveStatistics(emptyStatistics);
+                Debug.WriteLine("All statistics have been cleared");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error clearing statistics: {ex.Message}");
+            }
         }
     }
 }

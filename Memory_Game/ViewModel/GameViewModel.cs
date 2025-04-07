@@ -23,6 +23,7 @@ namespace Memory_Game.ViewModel
     {
         private readonly StatisticsService _statisticsService;
         private readonly GameSaveService _gameSaveService;
+        private readonly CategoryService _categoryService;
 
         private Game _currentGame;
         public Game CurrentGame
@@ -117,8 +118,8 @@ namespace Memory_Game.ViewModel
             }
         }
 
-        private ObservableCollection<string> _categories;
-        public ObservableCollection<string> Categories
+        private ObservableCollection<Category> _categories;
+        public ObservableCollection<Category> Categories
         {
             get => _categories;
             set
@@ -154,6 +155,19 @@ namespace Memory_Game.ViewModel
             }
         }
 
+        private bool _isGamePaused;
+        public bool IsGamePaused
+        {
+            get => _isGamePaused;
+            set
+            {
+                if (SetProperty(ref _isGamePaused, value))
+                {
+                    OnPropertyChanged(nameof(IsGameActive));
+                }
+            }
+        }
+
         public bool IsGameActive => CurrentGame != null && !CurrentGame.IsGameOver;
         public TimeSpan RemainingTime => IsGameActive ? TimeLimit - CurrentGame.ElapsedTime : TimeSpan.Zero;
         public bool CanStartGame => !string.IsNullOrEmpty(SelectedCategory) && BoardWidth * BoardHeight % 2 == 0;
@@ -171,6 +185,7 @@ namespace Memory_Game.ViewModel
         public ICommand ShowStatisticsCommand { get; private set; }
         public ICommand ShowAboutCommand { get; private set; }
         public ICommand ExitCommand { get; private set; }
+        public ICommand ManageCategoriesCommand { get; private set; }
 
         private DispatcherTimer _gameTimer;
         private DateTime _gameStartTime;
@@ -179,9 +194,11 @@ namespace Memory_Game.ViewModel
         {
             _statisticsService = new StatisticsService();
             _gameSaveService = new GameSaveService();
+            _categoryService = new CategoryService();
 
             InitializeDefaultValues();
             InitializeCommands();
+            Categories = new ObservableCollection<Category>(_categoryService.LoadCategories());
             // Don't call ExecuteNewGame() here
         }
 
@@ -198,12 +215,12 @@ namespace Memory_Game.ViewModel
             _selectedCategory = "Jordan 1"; // Changed from Animals to Jordan 1
 
             // Initialize categories
-            Categories = new ObservableCollection<string>
+            Categories = new ObservableCollection<Category>
             {
-                "Jordan 1",  // Changed from Animals to Jordan 1
-                "Fruits",
-                "Vehicles",
-                "Sports"
+                new Category { Name = "Jordan 1" },  // Changed from Animals to Jordan 1
+                new Category { Name = "Fruits" },
+                new Category { Name = "Vehicles" },
+                new Category { Name = "Sports" }
             };
 
             // Don't create a game immediately
@@ -234,12 +251,12 @@ namespace Memory_Game.ViewModel
 
             PauseGameCommand = new RelayCommand(
                 execute: (param) => ExecutePauseGame(),
-                canExecute: (param) => IsGameActive
+                canExecute: (param) => IsGameActive && !IsGamePaused
             );
 
             ResumeGameCommand = new RelayCommand(
                 execute: (param) => ExecuteResumeGame(),
-                canExecute: (param) => !IsGameActive && CurrentGame != null
+                canExecute: (param) => IsGameActive && IsGamePaused
             );
 
             SelectCategoryCommand = new RelayCommand<string>(
@@ -264,6 +281,11 @@ namespace Memory_Game.ViewModel
 
             ExitCommand = new RelayCommand(
                 execute: (param) => ExecuteExit(),
+                canExecute: (param) => true
+            );
+
+            ManageCategoriesCommand = new RelayCommand(
+                execute: (param) => ExecuteManageCategories(),
                 canExecute: (param) => true
             );
         }
@@ -396,15 +418,11 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteShowAbout()
         {
-            MessageBox.Show(
-                "Memory Game\n\n" +
-                "Created by: Hermeneanu Ionut Silviu\n" +
-                "Email: her.slviu.i@gmail.com\n" +
-                "Group: LF232\n" +
-                "Specialization: Informatica",
-                "About",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            var aboutWindow = new AboutView
+            {
+                Owner = Application.Current.MainWindow
+            };
+            aboutWindow.ShowDialog();
         }
 
         private void ExecuteExit()
@@ -526,6 +544,7 @@ namespace Memory_Game.ViewModel
                     ElapsedTime = CurrentGame.ElapsedTime,
                     RemainingTime = RemainingTime,
                     IsTimerPaused = !wasTimerRunning,
+                    IsPaused = IsGamePaused,
                     Moves = Moves,
                     Matches = Matches,
                     Cards = CurrentGame.Cards.Select(c => new CardState
@@ -618,10 +637,11 @@ namespace Memory_Game.ViewModel
                     _gameStartTime = DateTime.Now - gameState.ElapsedTime;
                     StartGameTimer();
 
-                    // If the game was paused when saved, pause it now
-                    if (gameState.IsTimerPaused)
+                    // Restore pause state
+                    if (gameState.IsPaused)
                     {
                         _gameTimer.Stop();
+                        IsGamePaused = true;
                     }
 
                     MessageBox.Show("Game loaded successfully!", "Load Game", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -687,6 +707,14 @@ namespace Memory_Game.ViewModel
             if (_gameTimer != null && _gameTimer.IsEnabled)
             {
                 _gameTimer.Stop();
+                IsGamePaused = true;
+
+                // Show pause message but don't automatically resume
+                MessageBox.Show(
+                    "Game Paused\nClick OK to continue",
+                    "Paused",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
         }
 
@@ -694,8 +722,24 @@ namespace Memory_Game.ViewModel
         {
             if (_gameTimer != null && !_gameTimer.IsEnabled)
             {
+                // Update the start time to account for the pause duration
+                _gameStartTime = DateTime.Now - CurrentGame.ElapsedTime;
                 _gameTimer.Start();
+                IsGamePaused = false;
             }
+        }
+
+        private void ExecuteManageCategories()
+        {
+            var categoryView = new CategoryView
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new CategoryViewModel()
+            };
+            categoryView.ShowDialog();
+
+            // Refresh categories after the dialog closes
+            Categories = new ObservableCollection<Category>(_categoryService.LoadCategories());
         }
 
         private void InitializeCards()
@@ -809,7 +853,7 @@ namespace Memory_Game.ViewModel
             _gameTimer.Interval = TimeSpan.FromSeconds(1);
             _gameTimer.Tick += (s, e) =>
             {
-                if (CurrentGame != null)
+                if (CurrentGame != null && !IsGamePaused)
                 {
                     CurrentGame.ElapsedTime = DateTime.Now - _gameStartTime;
                     OnPropertyChanged(nameof(RemainingTime));
@@ -823,12 +867,9 @@ namespace Memory_Game.ViewModel
                         // Update statistics for time-out loss
                         if (CurrentPlayer != null)
                         {
-                            _statisticsService.UpdatePlayerStats(
-                                CurrentPlayer.Username,
-                                false,
-                                CurrentGame.ElapsedTime,
-                                Moves
-                            );
+                            var stats = new Statistics(CurrentPlayer.Username);
+                            stats.UpdateStats(false, CurrentGame.ElapsedTime, Moves);
+                            _statisticsService.UpdateStatistics(stats);
                         }
 
                         MessageBox.Show("Time's up! Game Over!", "Game Over", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -837,6 +878,7 @@ namespace Memory_Game.ViewModel
                 }
             };
             _gameTimer.Start();
+            IsGamePaused = false;
         }
 
         private void CheckGameEnd()
@@ -854,12 +896,9 @@ namespace Memory_Game.ViewModel
                 // Save statistics
                 if (CurrentPlayer != null)
                 {
-                    _statisticsService.UpdatePlayerStats(
-                        CurrentPlayer.Username,
-                        true,
-                        CurrentGame.ElapsedTime,
-                        Moves
-                    );
+                    var stats = new Statistics(CurrentPlayer.Username);
+                    stats.UpdateStats(true, CurrentGame.ElapsedTime, Moves);
+                    _statisticsService.UpdateStatistics(stats);
                 }
 
                 MessageBox.Show(

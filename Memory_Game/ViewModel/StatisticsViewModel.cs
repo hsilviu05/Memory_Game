@@ -121,20 +121,23 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteClearStatistics()
         {
-            if (AllStatistics != null)
+            try
             {
-                AllStatistics.Clear();
+                _statisticsService.ClearAllStatistics();
+                LoadStatistics();
                 SelectedUserStats = null;
                 SelectedUser = null;
-                // Save empty statistics
-                // Will be implemented with statistics service
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error clearing statistics: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void LoadStatistics()
         {
             var stats = _statisticsService.LoadStatistics();
-            AllStatistics = new ObservableCollection<Statistics>(stats.Values);
+            AllStatistics = new ObservableCollection<Statistics>(stats);
             if (HasStatistics)
             {
                 SelectedUserStats = AllStatistics.First();
