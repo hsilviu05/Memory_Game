@@ -283,6 +283,9 @@
                 <MenuItem Header="Board Size"
                           Command="{Binding SetBoardSizeCommand}"
                           Style="{StaticResource SubMenuItem}"/>
+                <MenuItem Header="Manage Categories"
+                          Command="{Binding ManageCategoriesCommand}"
+                          Style="{StaticResource SubMenuItem}"/>
                 <Separator/>
                 <MenuItem Header="Exit"
                           Command="{Binding ExitCommand}"

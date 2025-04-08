@@ -128,10 +128,18 @@ namespace Memory_Game.Services
 
                 if (category != null)
                 {
-                    string categoryPath = Path.Combine(_imagesBasePath, categoryName);
-                    if (Directory.Exists(categoryPath))
+                    // Delete from both locations
+                    string appDataCategoryPath = Path.Combine(_categoriesDirectory, categoryName);
+                    string projectCategoryPath = Path.Combine(_imagesBasePath, categoryName);
+
+                    if (Directory.Exists(appDataCategoryPath))
                     {
-                        Directory.Delete(categoryPath, true);
+                        Directory.Delete(appDataCategoryPath, true);
+                    }
+
+                    if (Directory.Exists(projectCategoryPath))
+                    {
+                        Directory.Delete(projectCategoryPath, true);
                     }
 
                     categories.Remove(category);
