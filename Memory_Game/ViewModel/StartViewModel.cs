@@ -23,18 +23,11 @@ namespace Memory_Game.ViewModel
 
         private void ExecuteShowAbout(object parameter)
         {
-            MessageBox.Show(
-                "Memory Game\n\n" +
-                "A classic memory matching game where you need to find pairs of matching cards.\n\n" +
-                "Features:\n" +
-                "- Multiple categories\n" +
-                "- Customizable board size\n" +
-                "- Player statistics\n" +
-                "- Save and load games\n\n" +
-                "Created by: Your Name",
-                "About Memory Game",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            var aboutWindow = new AboutView
+            {
+                Owner = Application.Current.MainWindow
+            };
+            aboutWindow.ShowDialog();
         }
     }
 }

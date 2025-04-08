@@ -20,16 +20,22 @@ namespace Memory_Game.Services
         {
             try
             {
-                // Use a simpler path in the project directory
-                string projectDir = Directory.GetCurrentDirectory();
+                // Get the correct project directory
+                string projectDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                if (string.IsNullOrEmpty(projectDir))
+                {
+                    throw new DirectoryNotFoundException("Could not determine application directory");
+                }
+
                 _usersFilePath = Path.Combine(projectDir, "users.json");
                 _userImagesDirectory = Path.Combine(projectDir, "UserImages");
                 _statisticsService = new StatisticsService();
 
-                MessageBox.Show($"Project directory: {projectDir}\nUsers file path: {_usersFilePath}", "Debug Info");
-
                 // Create directories if they don't exist
-                Directory.CreateDirectory(_userImagesDirectory);
+                if (!Directory.Exists(_userImagesDirectory))
+                {
+                    Directory.CreateDirectory(_userImagesDirectory);
+                }
 
                 // Create users.json if it doesn't exist
                 if (!File.Exists(_usersFilePath))
@@ -38,16 +44,21 @@ namespace Memory_Game.Services
                     var options = new JsonSerializerOptions { WriteIndented = true };
                     string json = JsonSerializer.Serialize(emptyUsers, options);
                     File.WriteAllText(_usersFilePath, json);
-                    MessageBox.Show($"Created users.json at: {_usersFilePath}", "Debug Info");
                 }
-                else
+
+                // Verify file is writable
+                using (var fs = File.OpenWrite(_usersFilePath))
                 {
-                    MessageBox.Show($"users.json already exists at: {_usersFilePath}", "Debug Info");
+                    fs.Close();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error in UserService constructor: {ex.Message}\nStack trace: {ex.StackTrace}", "Error");
+                Debug.WriteLine($"Error in UserService constructor: {ex.Message}");
+                MessageBox.Show($"Error initializing user service. Please ensure the application has write permissions to:\n{Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory)}",
+                               "Initialization Error",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Error);
             }
         }
 
@@ -178,9 +189,13 @@ namespace Memory_Game.Services
             }
             catch (Exception ex)
             {
-                // Log error or handle it appropriately
                 Console.WriteLine($"Error deleting user image: {ex.Message}");
             }
+        }
+
+        public ObservableCollection<User> GetAllUsers()
+        {
+            return LoadUsers();
         }
     }
 }

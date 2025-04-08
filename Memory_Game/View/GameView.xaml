@@ -31,8 +31,17 @@
                          Value="True">
                     <Setter Property="Foreground"
                             Value="White"/>
-                    <Setter Property="Background"
-                            Value="#FF007ACC"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0,0"
+                                                 EndPoint="1,1">
+                                <GradientStop Color="#FF9BE8"
+                                              Offset="0"/>
+                                <GradientStop Color="#7B68EE"
+                                              Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -53,8 +62,17 @@
                          Value="True">
                     <Setter Property="Foreground"
                             Value="White"/>
-                    <Setter Property="Background"
-                            Value="#FF007ACC"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0,0"
+                                                 EndPoint="1,1">
+                                <GradientStop Color="#FF9BE8"
+                                              Offset="0"/>
+                                <GradientStop Color="#7B68EE"
+                                              Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -70,20 +88,30 @@
                     Value="5"/>
             <Setter Property="Background"
                     Value="#FF2D2D2D"/>
-            <Setter Property="BorderBrush"
-                    Value="#FF007ACC"/>
+            <Setter Property="BorderBrush">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0"
+                                         EndPoint="1,1">
+                        <GradientStop Color="#FF9BE8"
+                                      Offset="0"/>
+                        <GradientStop Color="#7B68EE"
+                                      Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
             <Setter Property="BorderThickness"
-                    Value="1"/>
+                    Value="2"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5">
+                                CornerRadius="10">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="5"
+                                <DropShadowEffect BlurRadius="10"
                                                   ShadowDepth="2"
+                                                  Color="#7B68EE"
                                                   Opacity="0.3"/>
                             </Border.Effect>
                             <ContentPresenter HorizontalAlignment="Center"
@@ -95,10 +123,19 @@
             <Style.Triggers>
                 <Trigger Property="IsMouseOver"
                          Value="True">
-                    <Setter Property="BorderBrush"
-                            Value="#FF00BFFF"/>
+                    <Setter Property="BorderBrush">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0,0"
+                                                 EndPoint="1,1">
+                                <GradientStop Color="#7B68EE"
+                                              Offset="0"/>
+                                <GradientStop Color="#FF9BE8"
+                                              Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
                     <Setter Property="BorderThickness"
-                            Value="2"/>
+                            Value="3"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -108,8 +145,17 @@
                TargetType="TextBlock">
             <Setter Property="FontSize"
                     Value="24"/>
-            <Setter Property="Foreground"
-                    Value="White"/>
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0"
+                                         EndPoint="1,1">
+                        <GradientStop Color="#FF9BE8"
+                                      Offset="0"/>
+                        <GradientStop Color="#7B68EE"
+                                      Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
             <Setter Property="FontWeight"
                     Value="Bold"/>
             <Setter Property="HorizontalAlignment"
@@ -206,9 +252,9 @@
         <Grid.Background>
             <LinearGradientBrush StartPoint="0,0"
                                  EndPoint="1,1">
-                <GradientStop Color="#FF1E1E1E"
+                <GradientStop Color="#1A1A1A"
                               Offset="0"/>
-                <GradientStop Color="#FF2D2D2D"
+                <GradientStop Color="#2D2D2D"
                               Offset="1"/>
             </LinearGradientBrush>
         </Grid.Background>
@@ -221,7 +267,7 @@
 
         <!-- Menu -->
         <Menu Grid.Row="0"
-              Background="#FF1E1E1E"
+              Background="#1A1A1A"
               Padding="10,0">
             <MenuItem Header="Game"
                       Style="{StaticResource ModernMenuItem}">
@@ -234,10 +280,6 @@
                 <MenuItem Header="Load Game"
                           Command="{Binding LoadGameCommand}"
                           Style="{StaticResource SubMenuItem}"/>
-                <MenuItem Header="Manage Categories"
-                          Command="{Binding ManageCategoriesCommand}"
-                          Style="{StaticResource SubMenuItem}"/>
-                <Separator/>
                 <MenuItem Header="Board Size"
                           Command="{Binding SetBoardSizeCommand}"
                           Style="{StaticResource SubMenuItem}"/>
@@ -363,21 +405,21 @@
                         Orientation="Horizontal"
                         HorizontalAlignment="Right">
                 <TextBlock Text="Moves: "
-                           Foreground="White"
+                           Foreground="#FF9BE8"
                            FontSize="18"
                            VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding Moves}"
-                           Foreground="White"
+                           Foreground="#7B68EE"
                            FontSize="18"
                            FontWeight="Bold"
                            VerticalAlignment="Center"
                            Margin="0,0,20,0"/>
                 <TextBlock Text="Matches: "
-                           Foreground="White"
+                           Foreground="#FF9BE8"
                            FontSize="18"
                            VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding Matches}"
-                           Foreground="White"
+                           Foreground="#7B68EE"
                            FontSize="18"
                            FontWeight="Bold"
                            VerticalAlignment="Center"/>
@@ -387,14 +429,22 @@
         <!-- Game Board -->
         <Border Grid.Row="2"
                 Margin="20,10,20,20"
-                Background="#FF1E1E1E"
-                BorderBrush="#FF007ACC"
-                BorderThickness="1"
-                CornerRadius="10">
+                Background="#1A1A1A"
+                BorderThickness="2"
+                CornerRadius="15">
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0"
+                                     EndPoint="1,1">
+                    <GradientStop Color="#FF9BE8"
+                                  Offset="0"/>
+                    <GradientStop Color="#7B68EE"
+                                  Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="10"
+                <DropShadowEffect BlurRadius="15"
                                   ShadowDepth="0"
-                                  Color="#FF007ACC"
+                                  Color="#7B68EE"
                                   Opacity="0.3"/>
             </Border.Effect>
 
@@ -483,5 +533,80 @@
                 </Viewbox>
             </Grid>
         </Border>
+
+        <!-- Victory Screen Overlay -->
+        <Grid Grid.RowSpan="3"
+              Panel.ZIndex="1000"
+              Visibility="{Binding CurrentGame.IsWon, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.Background>
+                <ImageBrush ImageSource="/Memory_Game;component/Resources/victory.png"
+                            Stretch="UniformToFill"/>
+            </Grid.Background>
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,0,20">
+                <Button Content="Play Again"
+                        Command="{Binding NewGameCommand}"
+                        Width="250"
+                        Height="60"
+                        FontSize="24"
+                        FontWeight="Bold">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0"
+                                                         EndPoint="1,1">
+                                        <GradientStop Color="#FF9BE8"
+                                                      Offset="0"/>
+                                        <GradientStop Color="#7B68EE"
+                                                      Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="Foreground"
+                                    Value="White"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="30"
+                                                BorderThickness="0">
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="10"
+                                                                  ShadowDepth="2"
+                                                                  Color="#7B68EE"
+                                                                  Opacity="0.5"/>
+                                            </Border.Effect>
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <LinearGradientBrush StartPoint="0,0"
+                                                                 EndPoint="1,1">
+                                                <GradientStop Color="#7B68EE"
+                                                              Offset="0"/>
+                                                <GradientStop Color="#FF9BE8"
+                                                              Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

@@ -12,15 +12,16 @@ using Microsoft.Win32;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Memory_Game.View;
-using Memory_Game.Utilities;
+using Memory_Game.Services;
 
 namespace Memory_Game.ViewModel
 {
     public class LoginViewModel : ViewModelBase, INotifyPropertyChanged
     {
-        private readonly UserService _userService;
-        private ObservableCollection<User> _users;
-        public ObservableCollection<User> Users
+        private readonly Services.UserService _userService;
+        private readonly Services.StatisticsService _statisticsService;
+        private ObservableCollection<UserWithStats> _users;
+        public ObservableCollection<UserWithStats> Users
         {
             get => _users;
             set
@@ -33,8 +34,8 @@ namespace Memory_Game.ViewModel
             }
         }
 
-        private User _selectedUser;
-        public User SelectedUser
+        private UserWithStats _selectedUser;
+        public UserWithStats SelectedUser
         {
             get => _selectedUser;
             set
@@ -91,7 +92,8 @@ namespace Memory_Game.ViewModel
 
         public LoginViewModel()
         {
-            _userService = new UserService();
+            _userService = new Services.UserService();
+            _statisticsService = new Services.StatisticsService();
 
             LoginCommand = new RelayCommand(
                 execute: (object param) => ExecuteLogin(),
@@ -108,9 +110,9 @@ namespace Memory_Game.ViewModel
                 canExecute: (object param) => CanDeleteUser
             );
 
-            SelectUserCommand = new RelayCommand<User>(
-                execute: (User user) => ExecuteSelectUser(user),
-                canExecute: (User user) => user != null
+            SelectUserCommand = new RelayCommand<UserWithStats>(
+                execute: (UserWithStats user) => ExecuteSelectUser(user),
+                canExecute: (UserWithStats user) => user != null
             );
 
             BrowseImageCommand = new RelayCommand(
@@ -118,7 +120,7 @@ namespace Memory_Game.ViewModel
                 canExecute: (object param) => true
             );
 
-            Users = new ObservableCollection<User>();
+            Users = new ObservableCollection<UserWithStats>();
             LoadUsers();
         }
 
@@ -134,7 +136,7 @@ namespace Memory_Game.ViewModel
 
                 var gameViewModel = new GameViewModel
                 {
-                    CurrentPlayer = SelectedUser
+                    CurrentPlayer = new User { Username = SelectedUser.Username, ImagePath = SelectedUser.ImagePath }
                 };
 
                 var gameView = new GameView
@@ -170,21 +172,42 @@ namespace Memory_Game.ViewModel
         {
             try
             {
-                var newUser = new User(NewUser, NewUserImage, false);
+                if (string.IsNullOrWhiteSpace(NewUser))
+                {
+                    MessageBox.Show("Please enter a username.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(NewUserImage))
+                {
+                    MessageBox.Show("Please select a profile image.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var newUser = new User
+                {
+                    Username = NewUser,
+                    ImagePath = NewUserImage
+                };
+
                 if (_userService.AddUser(newUser))
                 {
-                    Users.Add(newUser);
+                    // Initialize statistics for the new user
+                    var newStats = new Statistics(newUser.Username);
+                    _statisticsService.UpdateStatistics(newStats);
+
+                    LoadUsers(); // Reload users to include the new user with stats
                     NewUser = string.Empty;
-                    NewUserImage = string.Empty;
+                    NewUserImage = null;
                 }
                 else
                 {
-                    MessageBox.Show("A user with this username already exists.", "Create User Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Failed to create user. Username might already exist.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error creating user: {ex.Message}", "Create User Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error creating user: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -192,64 +215,86 @@ namespace Memory_Game.ViewModel
         {
             try
             {
-                if (SelectedUser != null)
-                {
-                    var result = MessageBox.Show(
-                        $"Are you sure you want to delete user {SelectedUser.Username}?",
-                        "Confirm Delete",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning);
+                if (SelectedUser == null) return;
 
-                    if (result == MessageBoxResult.Yes)
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete user {SelectedUser.Username}? This will also delete their statistics.",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning
+                );
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    if (_userService.DeleteUser(SelectedUser.Username))
                     {
-                        if (_userService.DeleteUser(SelectedUser.Username))
-                        {
-                            Users.Remove(SelectedUser);
-                            SelectedUser = null;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Error deleting user.", "Delete User Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
+                        // Statistics are deleted in UserService.DeleteUser
+                        LoadUsers();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to delete user.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting user: {ex.Message}", "Delete User Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error deleting user: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void ExecuteSelectUser(User user)
+        private void ExecuteSelectUser(UserWithStats user)
         {
             SelectedUser = user;
         }
 
         private void ExecuteBrowseImage()
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
+            try
             {
-                Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg|All files (*.*)|*.*",
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)
-            };
+                var dialog = new OpenFileDialog
+                {
+                    Filter = "Image Files|*.jpg;*.jpeg;*.png;*.gif;*.bmp",
+                    Title = "Select a profile image"
+                };
 
-            if (dialog.ShowDialog() == true)
+                if (dialog.ShowDialog() == true)
+                {
+                    NewUserImage = dialog.FileName;
+                }
+            }
+            catch (Exception ex)
             {
-                NewUserImage = dialog.FileName;
+                MessageBox.Show($"Error selecting image: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void LoadUsers()
         {
-            try
+            var users = _userService.GetAllUsers();
+            Users.Clear();
+
+            foreach (var user in users)
             {
-                Users = _userService.LoadUsers();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading users: {ex.Message}", "Load Users Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Users = new ObservableCollection<User>();
+                var stats = _statisticsService.GetUserStatistics(user.Username);
+                Users.Add(new UserWithStats
+                {
+                    Username = user.Username,
+                    ImagePath = string.IsNullOrEmpty(user.ImagePath) ? "pack://application:,,,/Resources/default_user.png" : user.ImagePath,
+                    GamesWon = stats.GamesWon,
+                    BestTime = stats.BestTime,
+                    AverageMovesPerGame = stats.AverageMovesPerGame
+                });
             }
         }
+    }
+
+    public class UserWithStats
+    {
+        public string Username { get; set; }
+        public string ImagePath { get; set; }
+        public int GamesWon { get; set; }
+        public TimeSpan BestTime { get; set; }
+        public double AverageMovesPerGame { get; set; }
     }
 }

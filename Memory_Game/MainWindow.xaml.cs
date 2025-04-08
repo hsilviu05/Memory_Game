@@ -29,6 +29,9 @@ namespace Memory_Game
             {
                 switch (e.ViewName)
                 {
+                    case "Exit":
+                        Close();
+                        break;
                     case "LoginView":
                         MainContent.Content = new LoginView();
                         break;
@@ -70,9 +73,29 @@ namespace Memory_Game
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
+            if (_gameViewModel != null && _gameViewModel.IsGameActive)
+            {
+                var result = MessageBox.Show(
+                    "Do you want to save the current game before exiting?",
+                    "Exit Game",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+
+                switch (result)
+                {
+                    case MessageBoxResult.Yes:
+                        _gameViewModel.SaveGameCommand.Execute(null);
+                        break;
+                    case MessageBoxResult.Cancel:
+                        e.Cancel = true;
+                        return;
+                }
+            }
+
             base.OnClosing(e);
             // Unsubscribe from events
             Common.NavigationService.NavigationRequested -= NavigationService_NavigationRequested;
+            Application.Current.Shutdown();
         }
     }
 }

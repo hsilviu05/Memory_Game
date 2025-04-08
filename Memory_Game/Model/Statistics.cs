@@ -13,6 +13,11 @@ namespace Memory_Game.Model
         public event PropertyChangedEventHandler PropertyChanged;
 
         private string _username;
+        private int _gamesPlayed;
+        private int _gamesWon;
+        private TimeSpan _bestTime;
+        private int _totalMoves;
+
         public string Username
         {
             get => _username;
@@ -28,7 +33,6 @@ namespace Memory_Game.Model
             }
         }
 
-        private int _gamesPlayed;
         public int GamesPlayed
         {
             get => _gamesPlayed;
@@ -45,7 +49,6 @@ namespace Memory_Game.Model
             }
         }
 
-        private int _gamesWon;
         public int GamesWon
         {
             get => _gamesWon;
@@ -64,30 +67,53 @@ namespace Memory_Game.Model
             }
         }
 
-        public double WinRate
+        public TimeSpan BestTime
         {
-            get
+            get => _bestTime;
+            set
             {
-                if (GamesPlayed > 0)
+                if (_bestTime != value)
                 {
-                    return (double)GamesWon / GamesPlayed;
+                    _bestTime = value;
+                    OnPropertyChanged();
                 }
-                return 0;
             }
         }
 
-        public TimeSpan BestTime { get; set; }
-        public int TotalMoves { get; set; }
+        public int TotalMoves
+        {
+            get => _totalMoves;
+            set
+            {
+                if (value < 0)
+                    throw new ArgumentException("Total moves cannot be negative");
+                if (_totalMoves != value)
+                {
+                    _totalMoves = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(AverageMovesPerGame));
+                }
+            }
+        }
+
+        public double WinRate => GamesPlayed > 0 ? (double)GamesWon / GamesPlayed : 0;
 
         public double AverageMovesPerGame => GamesPlayed > 0 ? (double)TotalMoves / GamesPlayed : 0;
 
         public Statistics()
         {
+            Username = "Unknown";
+            GamesPlayed = 0;
+            GamesWon = 0;
             BestTime = TimeSpan.MaxValue;
+            TotalMoves = 0;
         }
 
         public Statistics(string username)
         {
+            if (string.IsNullOrWhiteSpace(username))
+                throw new ArgumentException("Username cannot be empty");
+
             Username = username;
             GamesPlayed = 0;
             GamesWon = 0;
@@ -107,6 +133,8 @@ namespace Memory_Game.Model
                 }
             }
             TotalMoves += moves;
+            OnPropertyChanged(nameof(WinRate));
+            OnPropertyChanged(nameof(AverageMovesPerGame));
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

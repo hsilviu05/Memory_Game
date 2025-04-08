@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Icons\memory_game_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,14 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Resources\background.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Resource Include="Resources\background.png" />
+    <Resource Include="Resources\victory.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\victory.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    <Content Include="Icons\memory_game_icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Icons\memory_game_icon.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
 

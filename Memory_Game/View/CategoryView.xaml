@@ -15,102 +15,102 @@
     <Window.Resources>
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <Style x:Key="TitleText"
-                       TargetType="TextBlock">
+               TargetType="TextBlock">
             <Setter Property="FontSize"
-                                Value="32"/>
+                    Value="32"/>
             <Setter Property="FontWeight"
-                                Value="Bold"/>
+                    Value="Bold"/>
             <Setter Property="Foreground"
-                                Value="#00BFFF"/>
+                    Value="#00BFFF"/>
             <Setter Property="HorizontalAlignment"
-                                Value="Center"/>
+                    Value="Center"/>
             <Setter Property="Margin"
-                                Value="0,20,0,30"/>
+                    Value="0,20,0,30"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect BlurRadius="20"
-                                                          ShadowDepth="0"
-                                                          Color="#00BFFF"
-                                                          Opacity="0.5"/>
+                                      ShadowDepth="0"
+                                      Color="#00BFFF"
+                                      Opacity="0.5"/>
                 </Setter.Value>
             </Setter>
         </Style>
 
         <Style x:Key="ButtonStyle"
-                       TargetType="Button">
+               TargetType="Button">
             <Setter Property="Width"
-                                Value="120"/>
+                    Value="120"/>
             <Setter Property="Height"
-                                Value="40"/>
+                    Value="40"/>
             <Setter Property="Background"
-                                Value="#00BFFF"/>
+                    Value="#00BFFF"/>
             <Setter Property="Foreground"
-                                Value="White"/>
+                    Value="White"/>
             <Setter Property="BorderThickness"
-                                Value="0"/>
+                    Value="0"/>
             <Setter Property="Margin"
-                                Value="10"/>
+                    Value="10"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver"
-                                         Value="True">
+                         Value="True">
                     <Setter Property="Background"
-                                                Value="#FF5C2D91"/>
+                            Value="#FF5C2D91"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="TextBoxStyle"
-                       TargetType="TextBox">
+               TargetType="TextBox">
             <Setter Property="Width"
-                                Value="200"/>
+                    Value="200"/>
             <Setter Property="Height"
-                                Value="30"/>
+                    Value="30"/>
             <Setter Property="Background"
-                                Value="#2D2D2D"/>
+                    Value="#2D2D2D"/>
             <Setter Property="Foreground"
-                                Value="White"/>
+                    Value="White"/>
             <Setter Property="BorderBrush"
-                                Value="#00BFFF"/>
+                    Value="#00BFFF"/>
             <Setter Property="BorderThickness"
-                                Value="1"/>
+                    Value="1"/>
             <Setter Property="Margin"
-                                Value="10"/>
+                    Value="10"/>
         </Style>
 
         <Style x:Key="ListBoxStyle"
-                       TargetType="ListBox">
+               TargetType="ListBox">
             <Setter Property="Background"
-                                Value="#2D2D2D"/>
+                    Value="#2D2D2D"/>
             <Setter Property="Foreground"
-                                Value="White"/>
+                    Value="White"/>
             <Setter Property="BorderBrush"
-                                Value="#00BFFF"/>
+                    Value="#00BFFF"/>
             <Setter Property="BorderThickness"
-                                Value="1"/>
+                    Value="1"/>
             <Setter Property="Margin"
-                                Value="10"/>
+                    Value="10"/>
             <Setter Property="Height"
-                                Value="300"/>
+                    Value="300"/>
         </Style>
 
         <Style x:Key="ListBoxItemStyle"
-                       TargetType="ListBoxItem">
+               TargetType="ListBoxItem">
             <Setter Property="Background"
-                                Value="#2D2D2D"/>
+                    Value="#2D2D2D"/>
             <Setter Property="Foreground"
-                                Value="White"/>
+                    Value="White"/>
             <Setter Property="Margin"
-                                Value="5"/>
+                    Value="5"/>
             <Style.Triggers>
                 <Trigger Property="IsSelected"
-                                         Value="True">
+                         Value="True">
                     <Setter Property="Background"
-                                                Value="#00BFFF"/>
+                            Value="#00BFFF"/>
                 </Trigger>
                 <Trigger Property="IsMouseOver"
-                                         Value="True">
+                         Value="True">
                     <Setter Property="Background"
-                                                Value="#3D3D3D"/>
+                            Value="#3D3D3D"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -125,7 +125,7 @@
 
         <!-- Title -->
         <TextBlock Text="Manage Categories"
-                           Style="{StaticResource TitleText}"/>
+                   Style="{StaticResource TitleText}"/>
 
         <!-- Main Content -->
         <Grid Grid.Row="1">
@@ -138,17 +138,17 @@
             <!-- Categories List -->
             <StackPanel Grid.Column="0">
                 <TextBlock Text="Categories"
-                                           Foreground="White"
-                                           FontSize="18"
-                                           Margin="10,0,0,10"/>
+                           Foreground="White"
+                           FontSize="18"
+                           Margin="10,0,0,10"/>
                 <ListBox ItemsSource="{Binding Categories}"
-                                         SelectedItem="{Binding SelectedCategory}"
-                                         Style="{StaticResource ListBoxStyle}"
-                                         ItemContainerStyle="{StaticResource ListBoxItemStyle}">
+                         SelectedItem="{Binding SelectedCategory}"
+                         Style="{StaticResource ListBoxStyle}"
+                         ItemContainerStyle="{StaticResource ListBoxItemStyle}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}"
-                                                                   Margin="5"/>
+                                       Margin="5"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -156,46 +156,48 @@
 
             <!-- Buttons -->
             <StackPanel Grid.Column="1"
-                                    VerticalAlignment="Center"
-                                    Margin="20,0">
+                        VerticalAlignment="Center"
+                        Margin="20,0">
                 <Button Content="Add Category"
-                                        Command="{Binding AddCategoryCommand}"
-                                        Style="{StaticResource ButtonStyle}"/>
+                        Command="{Binding AddCategoryCommand}"
+                        Style="{StaticResource ButtonStyle}"/>
                 <Button Content="Delete Category"
-                                        Command="{Binding DeleteCategoryCommand}"
-                                        Style="{StaticResource ButtonStyle}"/>
+                        Command="{Binding DeleteCategoryCommand}"
+                        Style="{StaticResource ButtonStyle}"/>
             </StackPanel>
 
             <!-- Add Category Form -->
             <StackPanel Grid.Column="2">
                 <TextBlock Text="Add New Category"
-                                           Foreground="White"
-                                           FontSize="18"
-                                           Margin="10,0,0,10" Width="210"/>
+                           Foreground="White"
+                           FontSize="18"
+                           Margin="10,0,0,10"
+                           Width="210"/>
                 <Grid>
                     <TextBox Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource TextBoxStyle}"/>
+                             Style="{StaticResource TextBoxStyle}"/>
                     <TextBlock Text="Category Name"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="#808080"
-                                                   IsHitTestVisible="False"
-                                                   Visibility="{Binding NewCategoryName, Converter={StaticResource StringToVisibilityConverter}}" Width="92"/>
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="#808080"
+                               IsHitTestVisible="False"
+                               Visibility="{Binding NewCategoryName, Converter={StaticResource StringToVisibilityConverter}}"
+                               Width="92"/>
                 </Grid>
                 <Button Content="Select Images"
-                                        Command="{Binding SelectImagesCommand}"
-                                        Style="{StaticResource ButtonStyle}"/>
+                        Command="{Binding SelectImagesCommand}"
+                        Style="{StaticResource ButtonStyle}"/>
                 <TextBlock Text="{Binding SelectedImages.Count, StringFormat='Selected Images: {0}'}"
-                                           Foreground="White"
-                                           Margin="10"/>
+                           Foreground="White"
+                           Margin="10"/>
             </StackPanel>
         </Grid>
 
         <!-- Close Button -->
         <Button Grid.Row="2"
-                        Content="Close"
-                        Click="CloseButton_Click"
-                        Style="{StaticResource ButtonStyle}"
-                        HorizontalAlignment="Center"/>
+                Content="Close"
+                Click="CloseButton_Click"
+                Style="{StaticResource ButtonStyle}"
+                HorizontalAlignment="Center"/>
     </Grid>
 </Window> 

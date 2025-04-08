@@ -266,7 +266,7 @@ namespace Memory_Game.ViewModel
 
             SetBoardSizeCommand = new RelayCommand(
                 execute: (param) => ExecuteSetBoardSize(),
-                canExecute: (param) => !IsGameActive || CurrentGame == null
+                canExecute: (param) => true
             );
 
             ShowStatisticsCommand = new RelayCommand(
@@ -428,46 +428,8 @@ namespace Memory_Game.ViewModel
         {
             try
             {
-                bool canExit = true;
-
-                if (CurrentGame != null && !CurrentGame.IsGameOver)
-                {
-                    var result = MessageBox.Show(
-                        "Do you want to save the current game before exiting?",
-                        "Exit Game",
-                        MessageBoxButton.YesNoCancel,
-                        MessageBoxImage.Question);
-
-                    switch (result)
-                    {
-                        case MessageBoxResult.Yes:
-                            ExecuteSaveGame();
-                            break;
-                        case MessageBoxResult.Cancel:
-                            canExit = false;
-                            break;
-                            // For No, just continue with exit
-                    }
-                }
-
-                if (canExit)
-                {
-                    // Stop the game timer if it's running
-                    if (_gameTimer != null && _gameTimer.IsEnabled)
-                    {
-                        _gameTimer.Stop();
-                    }
-
-                    // Clear game state
-                    CurrentGame = null;
-                    _firstFlippedCard = null;
-                    _secondFlippedCard = null;
-                    Moves = 0;
-                    Matches = 0;
-
-                    // Navigate back to login view
-                    NavigationService.NavigateTo("LoginView");
-                }
+                // The MainWindow will handle saving the game if needed
+                NavigationService.NavigateTo("Exit");
             }
             catch (Exception ex)
             {
@@ -857,9 +819,17 @@ namespace Memory_Game.ViewModel
                         // Update statistics for time-out loss
                         if (CurrentPlayer != null)
                         {
-                            var stats = new Statistics(CurrentPlayer.Username);
-                            stats.UpdateStats(false, CurrentGame.ElapsedTime, Moves);
-                            _statisticsService.UpdateStatistics(stats);
+                            try
+                            {
+                                var stats = _statisticsService.GetUserStatistics(CurrentPlayer.Username);
+                                stats.UpdateStats(false, CurrentGame.ElapsedTime, Moves);
+                                var result = _statisticsService.UpdateStatistics(stats);
+                                Debug.WriteLine($"Statistics update for timeout result: {result}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Error updating statistics for timeout: {ex.Message}");
+                            }
                         }
 
                         MessageBox.Show("Time's up! Game Over!", "Game Over", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -873,7 +843,8 @@ namespace Memory_Game.ViewModel
 
         private void CheckGameEnd()
         {
-            if (Matches == 8) // All pairs matched
+            int totalPairs = (BoardWidth * BoardHeight) / 2;
+            if (Matches == totalPairs) // All pairs matched
             {
                 if (_gameTimer != null && _gameTimer.IsEnabled)
                 {
@@ -886,13 +857,21 @@ namespace Memory_Game.ViewModel
                 // Save statistics
                 if (CurrentPlayer != null)
                 {
-                    var stats = new Statistics(CurrentPlayer.Username);
-                    stats.UpdateStats(true, CurrentGame.ElapsedTime, Moves);
-                    _statisticsService.UpdateStatistics(stats);
+                    try
+                    {
+                        var stats = _statisticsService.GetUserStatistics(CurrentPlayer.Username);
+                        stats.UpdateStats(true, CurrentGame.ElapsedTime, Moves);
+                        var result = _statisticsService.UpdateStatistics(stats);
+                        Debug.WriteLine($"Statistics update for win result: {result}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error updating statistics for win: {ex.Message}");
+                    }
                 }
 
-                // Navigate to victory screen
-                NavigationService.NavigateTo("VictoryView", new { Moves = Moves, Time = CurrentGame.ElapsedTime });
+                // Notify UI of the win state
+                OnPropertyChanged(nameof(CurrentGame));
             }
         }
     }
